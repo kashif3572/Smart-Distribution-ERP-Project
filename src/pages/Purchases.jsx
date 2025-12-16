@@ -1,4 +1,4 @@
-// src/pages/Purchases.jsx - UPDATED WITH VENDOR RISK ANALYSIS
+// src/pages/Purchases.jsx - UPDATED WITH WORKING SORTING & FILTERING
 import React, { useEffect, useState, useCallback } from 'react';
 import { sheetsAPI } from '../services/sheetsAPI';
 
@@ -218,11 +218,7 @@ export default function Purchases() {
       );
     });
     
-    return Object.values(productMap).sort((a, b) => {
-      // Sort by priority: High > Medium > Low
-      const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
-      return priorityOrder[b.priority] - priorityOrder[a.priority];
-    });
+    return Object.values(productMap);
   };
 
   // ✅ CORRECT Priority Calculation
@@ -293,7 +289,141 @@ export default function Purchases() {
       vendor.criticalProducts = vendor.productCount; // Simplified - would need product-vendor mapping
     });
     
-    return Object.values(vendorMap).sort((a, b) => b.totalSpent - a.totalSpent);
+    return Object.values(vendorMap);
+  };
+
+  // NEW: Get sorted and filtered products
+  const getSortedAndFilteredProducts = () => {
+    if (!data?.productAnalysis) return [];
+    
+    let filtered = [...data.productAnalysis];
+    
+    // Apply search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.productId.toLowerCase().includes(term) ||
+        product.vendorRisk.toLowerCase().includes(term) ||
+        product.vendors?.some(v => v.toLowerCase().includes(term)) ||
+        false
+      );
+    }
+    
+    // Apply vendor filter
+    if (filterVendor !== 'all') {
+      filtered = filtered.filter(product => 
+        product.vendors?.includes(filterVendor) || false
+      );
+    }
+    
+    // Apply product filter
+    if (filterProduct !== 'all') {
+      filtered = filtered.filter(product => 
+        product.productId === filterProduct
+      );
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case 'productId':
+          aValue = a.productId;
+          bValue = b.productId;
+          break;
+          
+        case 'vendorRisk':
+          // Sort by risk level: High > Medium > Low
+          const riskOrder = { '🔴 High Risk': 3, '🟡 Medium Risk': 2, '🟢 Low Risk': 1 };
+          aValue = riskOrder[a.vendorRisk] || 0;
+          bValue = riskOrder[b.vendorRisk] || 0;
+          break;
+          
+        case 'priority':
+          // Sort by priority: High > Medium > Low
+          const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
+          aValue = priorityOrder[a.priority] || 0;
+          bValue = priorityOrder[b.priority] || 0;
+          break;
+          
+        case 'vendorCount':
+          aValue = a.vendorCount;
+          bValue = b.vendorCount;
+          break;
+          
+        case 'days':
+          aValue = a.daysSinceLastPurchase;
+          bValue = b.daysSinceLastPurchase;
+          break;
+          
+        case 'totalCost':
+          aValue = a.totalCost;
+          bValue = b.totalCost;
+          break;
+          
+        case 'totalQuantity':
+          aValue = a.totalQuantity;
+          bValue = b.totalQuantity;
+          break;
+          
+        case 'averageUnitCost':
+          aValue = a.averageUnitCost;
+          bValue = b.averageUnitCost;
+          break;
+          
+        default:
+          aValue = a.productId;
+          bValue = b.productId;
+      }
+      
+      // Apply sort order
+      if (sortOrder === 'desc') {
+        return bValue > aValue ? 1 : bValue < aValue ? -1 : 0;
+      } else {
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      }
+    });
+    
+    return filtered;
+  };
+
+  // NEW: Get sorted and filtered vendors
+  const getSortedAndFilteredVendors = () => {
+    if (!data?.vendorPerformance) return [];
+    
+    let filtered = [...data.vendorPerformance];
+    
+    // Apply search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(vendor => 
+        vendor.vendor.toLowerCase().includes(term)
+      );
+    }
+    
+    // Sort vendors by selected criteria
+    filtered.sort((a, b) => {
+      let aValue, bValue;
+      
+      if (sortBy === 'totalSpent') {
+        aValue = a.totalSpent;
+        bValue = b.totalSpent;
+      } else if (sortBy === 'productCount') {
+        aValue = a.productCount;
+        bValue = b.productCount;
+      } else if (sortBy === 'criticalProducts') {
+        aValue = a.criticalProducts;
+        bValue = b.criticalProducts;
+      } else {
+        aValue = a.vendor;
+        bValue = b.vendor;
+      }
+      
+      return sortOrder === 'desc' ? bValue - aValue : aValue - bValue;
+    });
+    
+    return filtered;
   };
 
   const calculateDaysAgo = (dateString) => {
@@ -629,7 +759,7 @@ export default function Purchases() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data?.vendorPerformance?.map((vendor, index) => {
+                  {getSortedAndFilteredVendors().map((vendor, index) => {
                     const criticalCount = vendor.productCount; // Simplified
                     const riskLevel = criticalCount >= 3 ? '🔴 High' : criticalCount >= 2 ? '🟡 Medium' : '🟢 Low';
                     
@@ -666,7 +796,7 @@ export default function Purchases() {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search by Product ID, Vendor ID..."
+                placeholder="Search by Product ID, Vendor ID, Risk Level..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -690,15 +820,29 @@ export default function Purchases() {
             </select>
             
             <select
+              value={filterProduct}
+              onChange={(e) => setFilterProduct(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[120px]"
+            >
+              <option value="all">All Products</option>
+              {data?.uniqueProducts?.map((product, index) => (
+                <option key={index} value={product}>{product}</option>
+              ))}
+            </select>
+            
+            <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[150px]"
             >
               <option value="vendorRisk">Sort by Risk</option>
               <option value="priority">Sort by Priority</option>
+              <option value="productId">Sort by Product</option>
               <option value="vendorCount">Sort by Vendor Count</option>
               <option value="days">Sort by Days Ago</option>
               <option value="totalCost">Sort by Total Cost</option>
+              <option value="totalQuantity">Sort by Quantity</option>
+              <option value="averageUnitCost">Sort by Avg Cost</option>
             </select>
             
             <button
@@ -708,6 +852,49 @@ export default function Purchases() {
               {sortOrder === "asc" ? "↑ Asc" : "↓ Desc"}
             </button>
           </div>
+        </div>
+        
+        {/* Quick Filter Chips */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          <button
+            onClick={() => {
+              setFilterVendor('all');
+              setFilterProduct('all');
+              setSearchTerm('');
+              setSortBy('vendorRisk');
+              setSortOrder('desc');
+            }}
+            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs hover:bg-blue-200"
+          >
+            Clear Filters
+          </button>
+          <button
+            onClick={() => {
+              setSortBy('vendorRisk');
+              setSortOrder('desc');
+            }}
+            className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs hover:bg-red-200"
+          >
+            🔴 High Risk First
+          </button>
+          <button
+            onClick={() => {
+              setSortBy('vendorCount');
+              setSortOrder('asc');
+            }}
+            className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs hover:bg-yellow-200"
+          >
+            ⚠️ Single Sources
+          </button>
+          <button
+            onClick={() => {
+              setSortBy('days');
+              setSortOrder('desc');
+            }}
+            className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs hover:bg-purple-200"
+          >
+            📅 Oldest First
+          </button>
         </div>
       </div>
 
@@ -719,22 +906,99 @@ export default function Purchases() {
             <p className="text-gray-600 text-sm">Inventory and supply chain risk insights by product</p>
           </div>
           <div className="mt-2 md:mt-0 text-sm text-gray-500">
-            {data?.productAnalysis?.length || 0} products analyzed
+            Showing {getSortedAndFilteredProducts().length} of {data?.productAnalysis?.length || 0} products
           </div>
         </div>
         
-        {data?.productAnalysis?.length > 0 ? (
+        {getSortedAndFilteredProducts().length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Avg Cost</th>
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Last Purchase</th>
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Vendors</th>
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Days Ago</th>
+                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <button 
+                      onClick={() => {
+                        setSortBy('productId');
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      }}
+                      className="flex items-center gap-1 hover:text-blue-600 font-medium"
+                    >
+                      Product
+                      {sortBy === 'productId' && (
+                        <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <button 
+                      onClick={() => {
+                        setSortBy('totalQuantity');
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      }}
+                      className="flex items-center gap-1 hover:text-blue-600 font-medium"
+                    >
+                      Qty
+                      {sortBy === 'totalQuantity' && (
+                        <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <button 
+                      onClick={() => {
+                        setSortBy('totalCost');
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      }}
+                      className="flex items-center gap-1 hover:text-blue-600 font-medium"
+                    >
+                      Total Cost
+                      {sortBy === 'totalCost' && (
+                        <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <button 
+                      onClick={() => {
+                        setSortBy('averageUnitCost');
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      }}
+                      className="flex items-center gap-1 hover:text-blue-600 font-medium"
+                    >
+                      Avg Cost
+                      {sortBy === 'averageUnitCost' && (
+                        <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <button 
+                      onClick={() => {
+                        setSortBy('days');
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      }}
+                      className="flex items-center gap-1 hover:text-blue-600 font-medium"
+                    >
+                      Days Ago
+                      {sortBy === 'days' && (
+                        <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <button 
+                      onClick={() => {
+                        setSortBy('vendorCount');
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      }}
+                      className="flex items-center gap-1 hover:text-blue-600 font-medium"
+                    >
+                      Vendors
+                      {sortBy === 'vendorCount' && (
+                        <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </th>
                   <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
                   <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Priority</th>
                   <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Action</th>
@@ -742,7 +1006,7 @@ export default function Purchases() {
               </thead>
 
               <tbody className="divide-y divide-gray-200">
-                {data.productAnalysis.map((product, index) => (
+                {getSortedAndFilteredProducts().map((product, index) => (
                   <tr 
                     key={index} 
                     className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
@@ -758,7 +1022,10 @@ export default function Purchases() {
                     <td className="p-3 font-semibold text-green-700">{formatCurrency(product.totalCost)}</td>
                     <td className="p-3 text-gray-700">{formatCurrency(product.averageUnitCost)}</td>
                     <td className="p-3 text-gray-700">
-                      {formatDate(product.lastPurchaseDate)}
+                      {product.daysSinceLastPurchase}
+                      {product.daysSinceLastPurchase > 30 && (
+                        <div className="text-xs text-red-500">⚠️ Old</div>
+                      )}
                     </td>
                     <td className="p-3">
                       <div className="font-medium">
@@ -767,12 +1034,6 @@ export default function Purchases() {
                       <div className={`text-xs mt-1 ${getVendorRiskColor(product.vendorRisk)}`}>
                         {product.vendorRisk}
                       </div>
-                    </td>
-                    <td className="p-3 text-gray-700">
-                      {product.daysSinceLastPurchase}
-                      {product.daysSinceLastPurchase > 30 && (
-                        <div className="text-xs text-red-500">⚠️ Old</div>
-                      )}
                     </td>
                     <td className="p-3">
                       <span className={`text-sm font-medium ${getVendorRiskColor(product.vendorRisk)}`}>
@@ -806,6 +1067,9 @@ export default function Purchases() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
             <h3 className="text-lg font-medium text-gray-600">No product data available</h3>
+            {searchTerm && (
+              <p className="text-gray-500 mt-2">No products found for "{searchTerm}"</p>
+            )}
           </div>
         )}
       </div>
@@ -818,28 +1082,79 @@ export default function Purchases() {
             <p className="text-gray-600 text-sm">Purchase analysis and dependency assessment</p>
           </div>
           <div className="mt-2 md:mt-0 text-sm text-gray-500">
-            {data?.vendorPerformance?.length || 0} vendors
+            {getSortedAndFilteredVendors().length} vendors
           </div>
         </div>
         
-        {data?.vendorPerformance?.length > 0 ? (
+        {getSortedAndFilteredVendors().length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Total Spent</th>
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Products</th>
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Critical Products</th>
-                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Avg Purchase</th>
+                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <button 
+                      onClick={() => {
+                        setSortBy('vendor');
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      }}
+                      className="flex items-center gap-1 hover:text-blue-600 font-medium"
+                    >
+                      Vendor
+                      {sortBy === 'vendor' && (
+                        <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <button 
+                      onClick={() => {
+                        setSortBy('totalSpent');
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      }}
+                      className="flex items-center gap-1 hover:text-blue-600 font-medium"
+                    >
+                      Total Spent
+                      {sortBy === 'totalSpent' && (
+                        <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <button 
+                      onClick={() => {
+                        setSortBy('productCount');
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      }}
+                      className="flex items-center gap-1 hover:text-blue-600 font-medium"
+                    >
+                      Products
+                      {sortBy === 'productCount' && (
+                        <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </th>
+                  <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">
+                    <button 
+                      onClick={() => {
+                        setSortBy('criticalProducts');
+                        setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      }}
+                      className="flex items-center gap-1 hover:text-blue-600 font-medium"
+                    >
+                      Critical Products
+                      {sortBy === 'criticalProducts' && (
+                        <span className="text-xs">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                      )}
+                    </button>
+                  </th>
                   <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Dependency Level</th>
                   <th className="p-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Recommendation</th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-gray-200">
-                {data.vendorPerformance.map((vendor, index) => {
-                  const criticalCount = vendor.productCount; // In real app, calculate properly
+                {getSortedAndFilteredVendors().map((vendor, index) => {
+                  const criticalCount = vendor.productCount;
                   const dependencyLevel = criticalCount >= 3 ? '🔴 High' : criticalCount >= 2 ? '🟡 Medium' : '🟢 Low';
                   const avgPurchase = vendor.totalSpent / Math.max(vendor.purchaseCount || 1, 1);
                   
@@ -849,7 +1164,6 @@ export default function Purchases() {
                       <td className="p-3 font-bold text-green-700">{formatCurrency(vendor.totalSpent)}</td>
                       <td className="p-3 text-gray-700">{vendor.productCount}</td>
                       <td className="p-3 font-bold text-red-600">{criticalCount}</td>
-                      <td className="p-3 text-gray-700">{formatCurrency(avgPurchase)}</td>
                       <td className="p-3">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                           criticalCount >= 3 ? 'bg-red-100 text-red-800' :
