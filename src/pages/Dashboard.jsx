@@ -220,41 +220,44 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Quick buttons */}
-        <div className="flex flex-wrap gap-3">
-          <button 
-            className="px-5 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-md flex items-center gap-3 font-medium"
-            onClick={() => navigate("/add-employee")}
-          >
-            <span className="text-xl">👨‍💼</span>
-            <div className="text-left">
-              <div className="font-bold">Add Employee</div>
-              <div className="text-xs opacity-90">Add staff to database</div>
-            </div>
-          </button>
-          
-          <button 
-            className="px-5 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-md flex items-center gap-3 font-medium"
-            onClick={() => navigate("/add-product")}
-          >
-            <span className="text-xl">📦</span>
-            <div className="text-left">
-              <div className="font-bold">Add Product</div>
-              <div className="text-xs opacity-90">Add products to inventory</div>
-            </div>
-          </button>
+        {/* Responsive Quick Actions */}
+<div className="flex flex-wrap gap-2">
+  <button 
+    className="px-3 py-2 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-sm hover:shadow-md flex items-center gap-1 sm:gap-2 font-medium text-sm"
+    onClick={() => navigate("/add-employee")}
+    title="Add Employee"
+  >
+    <span className="text-lg">👨‍💼</span>
+    <div className="hidden sm:block text-left">
+      <div className="font-semibold leading-tight">Add Employee</div>
+      <div className="text-xs opacity-80 leading-tight">Add staff</div>
+    </div>
+  </button>
+  
+  <button 
+    className="px-3 py-2 sm:px-4 sm:py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-sm hover:shadow-md flex items-center gap-1 sm:gap-2 font-medium text-sm"
+    onClick={() => navigate("/add-product")}
+    title="Add Product"
+  >
+    <span className="text-lg">📦</span>
+    <div className="hidden sm:block text-left">
+      <div className="font-semibold leading-tight">Add Product</div>
+      <div className="text-xs opacity-80 leading-tight">Add to inventory</div>
+    </div>
+  </button>
 
-          <button 
-            className="px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md flex items-center gap-3 font-medium"
-            onClick={fetchData}
-          >
-            <span className="text-xl">🔄</span>
-            <div className="text-left">
-              <div className="font-bold">Refresh</div>
-              <div className="text-xs opacity-90">Update from Sheets</div>
-            </div>
-          </button>
-        </div>
+  <button 
+    className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md flex items-center gap-1 sm:gap-2 font-medium text-sm"
+    onClick={fetchData}
+    title="Refresh Data"
+  >
+    <span className="text-lg">🔄</span>
+    <div className="hidden sm:block text-left">
+      <div className="font-semibold leading-tight">Refresh</div>
+      <div className="text-xs opacity-80 leading-tight">Update data</div>
+    </div>
+  </button>
+</div>
       </div>
 
       {/* Data Source Info */}
@@ -271,7 +274,7 @@ export default function Dashboard() {
           <div className="mt-2 md:mt-0">
             <div className="flex items-center gap-2">
               <div className={`w-2 h-2 rounded-full ${error ? 'bg-red-500' : 'bg-green-500'}`}></div>
-              <span className="text-sm text-gray-600">Backend: https://sheets-api-545260361851.us-central1.run.app/</span>
+              <span className="text-sm text-gray-600">Backend: Google Cloud server</span>
             </div>
             <div className="text-xs text-gray-500 mt-1">
               Response time: &lt; 500ms • Last updated: {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -283,7 +286,7 @@ export default function Dashboard() {
       {/* TOP CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {quickStats.map((item, i) => (
-          <div key={i} className="bg-white p-5 rounded-xl shadow hover:shadow-md transition-all border border-gray-100">
+          <div key={i} className="bg-white p-4 rounded-xl shadow-sm hover:shadow transition-all border border-gray-100">
             <div className="flex items-center justify-between mb-3">
               <span className="text-2xl">{item.icon}</span>
               <div className="flex items-center gap-1">
@@ -294,7 +297,7 @@ export default function Dashboard() {
               </div>
             </div>
             <p className="text-gray-500 text-sm font-medium">{item.title}</p>
-            <h2 className="text-2xl font-bold mt-2 text-gray-800">{item.value}</h2>
+            <h2 className="text-xl font-bold mt-1 text-gray-800">{item.value}</h2>
             <p className="text-gray-400 text-xs mt-2">{item.description}</p>
           </div>
         ))}

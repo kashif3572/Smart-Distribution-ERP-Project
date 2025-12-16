@@ -1,4 +1,4 @@
-// src/components/Sidebar.jsx - CLEAN VERSION
+// src/components/Sidebar.jsx - FULLY UPDATED RESPONSIVE VERSION
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -33,7 +33,7 @@ export default function Sidebar() {
       },
       { 
         to: '/delivery', 
-        label: 'Order Deliverd', 
+        label: 'Order Delivered', 
         icon: '🚚'
       },
       { 
@@ -51,7 +51,6 @@ export default function Sidebar() {
         label: 'Add Employee', 
         icon: '👨‍💼'
       }
-	  
     ],
     sales: [
       { 
@@ -122,45 +121,49 @@ export default function Sidebar() {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - RESPONSIVE VERSION */}
       <aside className={`
         ${isCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'}
-        fixed lg:sticky top-0 w-64 bg-gradient-to-b from-blue-800 via-blue-800 to-blue-900 text-white 
-        h-screen z-30 transition-transform duration-300 ease-in-out
+        fixed lg:sticky top-0 left-0 
+        w-52 sm:w-56 md:w-60 lg:w-64 xl:w-72  /* Responsive widths */
+        bg-gradient-to-b from-blue-800 via-blue-800 to-blue-900 text-white 
+        h-screen z-30 transition-all duration-300 ease-in-out
         flex flex-col shadow-xl border-r border-blue-700
+        overflow-y-auto  /* Allow scrolling if content overflows */
       `}>
-        {/* Header */}
-        <div className="p-4 border-b border-blue-700 bg-blue-800">
+        
+        {/* Header - Compact */}
+        <div className="p-3 border-b border-blue-700 bg-blue-800">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-lg">
-                <span className="text-lg font-bold">⚡</span>
+            <div className="flex items-center space-x-2">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
+                <span className="text-base font-bold">⚡</span>
               </div>
-              <div>
-                <h1 className="text-xl font-bold">SMART ERP</h1>
-                <p className="text-xs text-blue-200">Enterprise Solution</p>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold truncate">SMART ERP</h1>
+                <p className="text-xs text-blue-200 truncate">Enterprise Solution</p>
               </div>
             </div>
             <button 
               onClick={() => setIsCollapsed(true)}
-              className="lg:hidden text-blue-200 hover:text-white"
+              className="lg:hidden text-blue-200 hover:text-white flex-shrink-0"
             >
               ✕
             </button>
           </div>
         </div>
 
-        {/* User Info */}
-        <div className="p-4 border-b border-blue-700 bg-blue-800/50">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full flex items-center justify-center font-bold text-white">
+        {/* User Info - Compact */}
+        <div className="p-3 border-b border-blue-700 bg-blue-800/50">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 flex-shrink-0 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full flex items-center justify-center font-bold text-white text-sm">
               {getInitials(user?.name)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">{user?.name || 'User'}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-blue-200 capitalize">{user?.role || 'User'}</span>
-                <span className="text-xs px-2 py-1 bg-green-500/20 text-green-300 rounded-full">
+              <p className="font-medium truncate text-sm">{user?.name || 'User'}</p>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="text-xs text-blue-200 capitalize truncate">{user?.role || 'User'}</span>
+                <span className="text-xs px-1.5 py-0.5 bg-green-500/20 text-green-300 rounded-full flex-shrink-0">
                   Online
                 </span>
               </div>
@@ -168,46 +171,48 @@ export default function Sidebar() {
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="flex-1 p-4">
-          <nav className="space-y-1">
+        {/* Navigation - Compact */}
+        <div className="flex-1 p-2 sm:p-3">
+          <nav className="space-y-0.5">
             {items.map((item) => (
               <Link 
                 key={item.to}
                 to={item.to}
                 onClick={() => setIsCollapsed(true)}
                 className={`
-                  flex items-center space-x-3 px-3 py-3 rounded-lg transition-all duration-200
+                  flex items-center space-x-2 px-2 py-1.5 sm:px-3 sm:py-2 
+                  rounded-lg transition-all duration-200 text-sm
+                  hover:bg-blue-700/50 hover:text-white
                   ${isActive(item.to, item.exact) 
                     ? 'bg-blue-600 text-white shadow-md' 
-                    : 'hover:bg-blue-700/50 hover:text-white'
+                    : 'text-blue-100'
                   }
                 `}
               >
-                <span className="text-lg">{item.icon}</span>
-                <span className="font-medium">{item.label}</span>
+                <span className="text-base flex-shrink-0">{item.icon}</span>
+                <span className="font-medium truncate text-xs sm:text-sm">{item.label}</span>
               </Link>
             ))}
           </nav>
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-blue-700 bg-blue-800/50">
+        {/* Footer - Compact */}
+        <div className="p-3 border-t border-blue-700 bg-blue-800/50">
           {/* Logout Button */}
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center space-x-2 px-4 py-3 
+            className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm
                      bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 
                      rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg"
           >
-            <span>🚪</span>
+            <span className="text-sm">🚪</span>
             <span>Logout</span>
           </button>
 
           {/* Version Info */}
-          <div className="mt-4 text-center">
+          <div className="mt-3 text-center">
             <p className="text-xs text-blue-300">ERP System v2.0</p>
-            <p className="text-xs text-blue-400 mt-1">© 2024 Smart Distribution</p>
+            <p className="text-xs text-blue-400 mt-0.5">© 2025 Smart Distribution</p>
           </div>
         </div>
       </aside>
