@@ -203,7 +203,7 @@ export default function Login() {
                   </div>
                   <span className="text-sm text-blue-200/80 hidden sm:block">|</span>
                   <span className="text-xs bg-blue-500/30 text-blue-200 px-2 py-1 rounded-full">
-                    Innovation Batch 2025
+                    AI/ML Batch 2025
                   </span>
                 </div>
               </div>
