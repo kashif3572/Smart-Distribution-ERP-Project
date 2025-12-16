@@ -1,20 +1,90 @@
+📦 Smart Distribution ERP
 
-Smart Distribution ERP - Starter scaffold
-=======================================
+A modern ERP system for distribution companies that connects directly to Google Sheets for real-time business management.
 
-Files created for you:
-- src/ (App, pages, auth, components)
-- package.json (vite + react)
-- tailwind config
+🚀 Live Demo
+🔗 URL: https://smart-ditributor-solution.netlify.app
 
-How to run:
-1. npm install
-2. npm run dev
-3. Open http://localhost:5173
+Demo Logins:
 
-Demo users (for quick testing):
-- admin / 1234
-- sales1 / 1234
-- rider1 / 1234
+Admin: admin / 1234 (Full access)
 
-Place your previous frontend inside `old_frontend/` directory before merging any code you want to reuse.
+Sales: BK-101 / John101 (Orders & Customers)
+
+Rider: rider1 / 1234 (Deliveries only)
+
+✨ Features
+📊 Real-time Dashboard - Live analytics from Google Sheets
+
+🛒 Order Management - Create & track sales orders
+
+👥 Customer Database - Manage customer information
+
+🚚 Delivery Tracking - Assign & monitor deliveries
+
+📦 Inventory Management - Product catalog with vendors
+
+🔐 Role-based Access - Admin, Sales, Rider roles
+
+📱 Fully Responsive - Works on all screen sizes
+
+🛠 Tech Stack
+Frontend: React + Vite + Tailwind CSS
+
+Charts: Recharts for data visualization
+
+Backend: Node.js/Express API
+
+Database: Google Sheets (24+ sheets)
+
+Hosting: Netlify (Frontend) + Google Cloud Run (Backend)
+
+📁 Project Structure
+text
+src/
+├── pages/           # Main pages
+│   ├── Dashboard.jsx  # Analytics dashboard
+│   ├── Login.jsx      # Login system
+│   ├── Orders.jsx     # Order management
+│   └── Customers.jsx  # Customer database
+├── components/      # Reusable components
+│   └── Sidebar.jsx   # Navigation sidebar
+└── services/
+    └── sheetsAPI.js  # Google Sheets connection
+⚡ Quick Start
+bash
+# 1. Clone & install
+git clone https://github.com/kashif3572/Smart-Distribution-ERP-Project.git
+cd Smart-Distribution-ERP-Project
+npm install
+
+# 2. Run locally
+npm run dev
+# Opens http://localhost:5173
+
+# 3. Build for production
+npm run build
+🔌 API Connection
+The app connects to:
+
+Backend API: https://sheets-api-545260361851.us-central1.run.app
+
+Google Sheets: 24+ synchronized sheets
+
+Auto-refresh: Every 5 minutes
+
+🚀 Deployment
+Auto-deploy: Push to main branch → Netlify builds in 2 min
+
+Manual deploy: npm run build → Upload dist/ folder
+
+📞 Support
+Issues: GitHub Issues
+
+Email: Kashifbilalkashi786@gmail.com
+
+Team: Kashif Bilal & Team 38 (Innovation Batch 2025)
+
+✅ Status: Production Ready
+📅 Last Updated: December 2025
+⭐ Star us on GitHub if you like it!
