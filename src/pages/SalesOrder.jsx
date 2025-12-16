@@ -2,73 +2,26 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
-// Static product data
-const products = [
-  { id: "P001", name: "Coca-Cola 330ml", price: 102 },
-  { id: "P002", name: "Lays Chips 50g", price: 36 },
-  { id: "P003", name: "Mineral Water 500ml", price: 26.4 },
-  { id: "P004", name: "Bread Loaf", price: 66 },
-  { id: "P005", name: "Milk 1L", price: 168 },
-  { id: "P006", name: "Chocolate Bar", price: 90 },
-  { id: "P007", name: "Instant Noodles", price: 54 },
-  { id: "P008", name: "Toothpaste", price: 144 },
-  { id: "P009", name: "Shampoo 250ml", price: 216 },
-  { id: "P010", name: "Soap Bar", price: 78 },
-  { id: "P011", name: "Cooking Oil 1L", price: 336 },
-  { id: "P012", name: "Sugar 1kg", price: 132 },
-  { id: "P013", name: "Tea Bags 100pcs", price: 420 },
-  { id: "P014", name: "Flour 5kg", price: 312 },
-  { id: "P015", name: "Rice Basmati 5kg", price: 900 },
-  { id: "P016", name: "Salt 800g", price: 36 },
-  { id: "P017", name: "Detergent Powder 1kg", price: 216 },
-  { id: "P018", name: "Dishwashing Liquid 500ml", price: 108 },
-  { id: "P019", name: "Match Box", price: 12 },
-  { id: "P020", name: "Biscuit Pack 100g", price: 24 },
-  { id: "P021", name: "Hand Wash 250ml", price: 108 },
-  { id: "P022", name: "Tissue Box", price: 144 },
-  { id: "P023", name: "Battery AA (2pcs)", price: 72 },
-  { id: "P024", name: "Black Pepper 100g", price: 96 },
-  { id: "P025", name: "Red Chili Powder 250g", price: 144 },
-  { id: "P026", name: "Corn Flakes 250g", price: 216 },
-  { id: "P027", name: "Laundry Soap Bar", price: 42 },
-  { id: "P028", name: "Shaving Foam", price: 240 },
-  { id: "P029", name: "Toilet Cleaner 500ml", price: 132 },
-  { id: "P030", name: "Fruit Juice 1L", price: 168 },
-];
-
-// Static shop data
-const shops = [
-  { id: "SHP-001", name: "City Supermarket", owner: "Waqas Ali", area: "Downtown" },
-  { id: "SHP-002", name: "Corner Store", owner: "Ali Raza", area: "Market Road" },
-  { id: "SHP-003", name: "Mega Mart", owner: "Sarah Khan", area: "Shopping Mall" },
-  { id: "SHP-004", name: "Daily Needs", owner: "Ahmed Hassan", area: "Residential Area" },
-  { id: "SHP-005", name: "Super Value", owner: "Fatima Noor", area: "Commercial Street" },
-  { id: "SHP-006", name: "Quick Mart", owner: "Usman Tariq", area: "Main Bazaar" },
-  { id: "SHP-007", name: "Family Store", owner: "Hassan Ahmed", area: "Gulberg" },
-  { id: "SHP-008", name: "24/7 Mart", owner: "Rehan Siddiqui", area: "Cantt" },
-  { id: "SHP-009", name: "Fresh Foods", owner: "Ayesha Malik", area: "Model Town" },
-  { id: "SHP-010", name: "Super Save", owner: "Adnan Sharif", area: "Liberty" },
-  { id: "SHP-011", name: "Value Plus", owner: "Maria Iqbal", area: "Johar Town" },
-  { id: "SHP-012", name: "City Center", owner: "Hamza Ali", area: "Faisal Town" },
-  { id: "SHP-013", name: "Mega Value", owner: "Sana Javed", area: "Wapda Town" },
-  { id: "SHP-014", name: "Daily Mart", owner: "Salman Khan", area: "Garden Town" },
-  { id: "SHP-015", name: "Super Market", owner: "John Doe", area: "Defence" },
-];
+// API endpoints
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/read`;
 
 export default function SalesOrder() {
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  const [shops, setShops] = useState([]);
+  const [products, setProducts] = useState([]);
   const [orderItems, setOrderItems] = useState([]);
   const [selectedShop, setSelectedShop] = useState("");
   const [searchProduct, setSearchProduct] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
   const [isShopDropdownOpen, setIsShopDropdownOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
+  const [loading, setLoading] = useState(true);
 
   // Redirect if user is not logged in or not a salesman
   useEffect(() => {
@@ -76,6 +29,85 @@ export default function SalesOrder() {
       navigate('/login');
     }
   }, [user, navigate]);
+
+  // Fetch shops and products from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch shops
+        const shopsResponse = await fetch(`${API_BASE_URL}/Customers_DB`);
+        const shopsData = await shopsResponse.json();
+        
+        // Convert shops data to match old format
+        if (shopsData.success && shopsData.data.length > 1) {
+          const headers = shopsData.data[0];
+          const rows = shopsData.data.slice(1);
+          
+          const formattedShops = rows.map(row => {
+            const shop = {};
+            headers.forEach((header, index) => {
+              shop[header] = row[index] || "";
+            });
+            
+            return {
+              id: shop.Shop_ID || "",
+              name: shop.Shop_Name || "",
+              owner: shop.Owner_Name || "",  // Using Owner_Name field
+              area: shop.Area_ID || ""
+            };
+          }).filter(shop => shop.id && shop.name); // Filter out invalid shops
+          
+          setShops(formattedShops);
+        }
+        
+        // Fetch products
+        const productsResponse = await fetch(`${API_BASE_URL}/Product_Inventory`);
+        const productsData = await productsResponse.json();
+        
+        // Convert products data to match old format
+        if (productsData.success && productsData.data.length > 1) {
+          const headers = productsData.data[0];
+          const rows = productsData.data.slice(1);
+          
+          const formattedProducts = rows.map(row => {
+            const product = {};
+            headers.forEach((header, index) => {
+              product[header] = row[index] || "";
+            });
+            
+            return {
+              id: product.Product_ID || "",
+              name: product.Name || "",
+              price: parseFloat(product.Sale_Price) || 0
+            };
+          }).filter(product => product.id && product.name && product.price > 0); // Filter out invalid products
+          
+          setProducts(formattedProducts);
+          setFilteredProducts(formattedProducts);
+        }
+        
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setMessage({ 
+          text: "Failed to load shops and products. Please refresh the page.", 
+          type: "error" 
+        });
+        
+        // Fallback to empty arrays
+        setShops([]);
+        setProducts([]);
+        setFilteredProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (user && user.role === 'sales') {
+      fetchData();
+    }
+  }, [user]);
 
   // Get current shop details
   const currentShop = shops.find(shop => shop.id === selectedShop) || {};
@@ -91,7 +123,7 @@ export default function SalesOrder() {
       );
       setFilteredProducts(filtered);
     }
-  }, [searchProduct]);
+  }, [searchProduct, products]);
 
   // Group products by first letter for browse section
   const groupedProducts = filteredProducts.reduce((acc, product) => {
@@ -155,76 +187,110 @@ export default function SalesOrder() {
 
   // Calculate total amount
   const totalAmount = orderItems.reduce((sum, item) => sum + item.lineTotal, 0);
-
-  // Handle order submission - UPDATED (No auto logout)
+  
+  // Handle order submission with proper validation handling
   const handleSubmitOrder = async () => {
-    if (!selectedShop) {
-      setMessage({ text: "Please select a shop", type: "error" });
-      return;
-    }
+  if (!selectedShop) {
+    setMessage({ text: "Please select a shop", type: "error" });
+    return;
+  }
 
-    if (orderItems.length === 0) {
-      setMessage({ text: "Please add at least one product", type: "error" });
-      return;
-    }
+  if (orderItems.length === 0) {
+    setMessage({ text: "Please add at least one product", type: "error" });
+    return;
+  }
 
-    if (!user) {
-      setMessage({ text: "User not authenticated", type: "error" });
-      return;
-    }
+  if (!user) {
+    setMessage({ text: "User not authenticated", type: "error" });
+    return;
+  }
 
-    const orderData = {
-      Shop_ID: currentShop.id,
-      Salesman_ID: user.id,
-      Salesman_name: user.name,
-      Shop_Owner_Name: currentShop.owner,
-      Total_Amount: totalAmount,
-      Items: orderItems.map(item => ({
-        Product_ID: item.productId,
-        Qty: item.quantity
-      }))
-    };
-
-    setSubmitting(true);
-    setMessage({ text: "Submitting order...", type: "info" });
-
-    try {
-      const response = await fetch("https://n8n.edutechpulse.online/webhook/order-submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      if (response.ok) {
-        setMessage({ 
-          text: "✅ Order submitted successfully! You can create another order or go back to dashboard.", 
-          type: "success" 
-        });
-        
-        // Reset form but stay on the page
-        setTimeout(() => {
-          setOrderItems([]);
-          setSelectedShop("");
-          setSelectedProduct("");
-          setSearchProduct("");
-          setQuantity(1);
-        }, 2000);
-        
-      } else {
-        throw new Error("Failed to submit order");
-      }
-    } catch (error) {
-      setMessage({ 
-        text: "❌ Failed to submit order. Please try again.", 
-        type: "error" 
-      });
-    } finally {
-      setSubmitting(false);
-    }
+  const orderData = {
+    Shop_ID: currentShop.id,
+    Salesman_ID: user.id,
+    Salesman_name: user.name,
+    Shop_Owner_Name: currentShop.owner,
+    Total_Amount: totalAmount,
+    Items: orderItems.map(item => ({
+      Product_ID: item.productId,
+      Qty: item.quantity
+    }))
   };
 
+  setSubmitting(true);
+  setMessage({ text: "Validating order...", type: "info" });
+
+  try {
+  const response = await fetch("https://n8n.edutechpulse.online/webhook/order-submit", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(orderData),
+  });
+
+  const responseData = await response.json();
+  
+  // DEBUGGING: Check what the backend is actually returning
+  console.log("=== DEBUG ORDER SUBMISSION ===");
+  console.log("Response status:", response.status);
+  console.log("Response ok:", response.ok);
+  console.log("Response data:", responseData);
+  console.log("Response data status:", responseData.status);
+  console.log("Response data success:", responseData.success);
+  console.log("Response data.message_english:", responseData.message_english);
+  console.log("=== END DEBUG ===");
+
+  // Check if the order was successful or if there were validation errors
+  if (response.ok) {
+    // Check for validation failures in the response
+    if (responseData.status === "INVENTORY_INSUFFICIENT" || 
+        responseData.status === "CREDIT_LIMIT_EXCEEDED" ||
+        responseData.status === "FAILED") {
+      // Validation failed - show error message
+      setMessage({ 
+        text: formatValidationError(responseData), 
+        type: "error" 
+      });
+    } else {
+      // Order successful
+      setMessage({ 
+        text: "✅ Order submitted successfully! You can create another order or go back to dashboard.", 
+        type: "success" 
+      });
+      
+      // Reset form but stay on the page
+      setTimeout(() => {
+        setOrderItems([]);
+        setSelectedShop("");
+        setSelectedProduct("");
+        setSearchProduct("");
+        setQuantity(1);
+      }, 2000);
+    }
+  } else {
+    // Handle HTTP error responses
+    if (response.status === 400 || response.status === 422) {
+      // Validation error from backend
+      const errorMsg = responseData.message || responseData.error || "Validation failed";
+      setMessage({ 
+        text: `❌ ${errorMsg}`, 
+        type: "error" 
+      });
+    } else {
+      throw new Error("Failed to submit order");
+    }
+  }
+} catch (error) {
+  console.error("Order submission error:", error);
+  setMessage({ 
+    text: "❌ Failed to submit order. Please try again.", 
+    type: "error" 
+  });
+} finally {
+  setSubmitting(false);
+}
+};
   const handleBackToDashboard = () => {
     navigate("/sales-dashboard");
   };
@@ -246,9 +312,83 @@ export default function SalesOrder() {
     }).format(amount);
   };
 
-  // Show loading while checking authentication
+  const formatValidationError = (responseData) => {
+    if (responseData.status === "INVENTORY_INSUFFICIENT") {
+      const products = responseData.outOfStockProducts || [];
+      
+      if (products.length > 0) {
+        let message = "❌ **Stock Unavailable**\n\n";
+        message += "The following products have insufficient stock:\n\n";
+        
+        products.forEach((product, index) => {
+          message += `• **${product.product_name}**\n`;
+          message += `  Available: ${product.available_quantity}\n`;
+          message += `  Ordered: ${product.requested_quantity}\n`;
+          message += `  Short by: ${product.requested_quantity - product.available_quantity}\n\n`;
+        });
+        
+        message += "Please reduce quantities and try again.";
+        return message;
+      }
+      
+      return "❌ Insufficient stock for some products. Please check quantities.";
+      
+    } else if (responseData.status === "CREDIT_LIMIT_EXCEEDED") {
+      const currentBalance = parseFloat(responseData.current_balance) || 0;
+      const creditLimit = parseFloat(responseData.credit_limit) || 0;
+      const orderAmount = parseFloat(responseData.order_amount) || 0;
+      const availableCredit = creditLimit - currentBalance;
+      
+      let message = "❌ **Credit Limit Exceeded**\n\n";
+      message += "This order cannot be processed due to credit limit constraints:\n\n";
+      message += `• Current Balance: ${formatCurrency(currentBalance)}\n`;
+      message += `• Credit Limit: ${formatCurrency(creditLimit)}\n`;
+      message += `• Available Credit: ${formatCurrency(availableCredit)}\n`;
+      message += `• Order Amount: ${formatCurrency(orderAmount)}\n\n`;
+      message += `**Shortfall: ${formatCurrency(orderAmount - availableCredit)}**\n\n`;
+      message += "Please collect payment or contact accounts department.";
+      
+      return message;
+      
+    } else if (responseData.message_english) {
+      return `❌ ${responseData.message_english}`;
+    }
+    
+    return "❌ Order validation failed. Please try again.";
+  };
+
+  // Show loading while checking authentication or fetching data
   if (!user) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <p className="text-gray-600">Loading shops and products...</p>
+      </div>
+    );
+  }
+
+  if (shops.length === 0 || products.length === 0) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <div className="text-red-500 mb-4">
+          <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">Unable to load data</h2>
+        <p className="text-gray-600 mb-4">Please check your API server and refresh the page.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium"
+        >
+          Refresh Page
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -326,7 +466,7 @@ export default function SalesOrder() {
                        message.type === 'error' ? '❌' : 'ℹ️'}
                     </div>
                     <div className="ml-3">
-                      <p className="text-sm font-medium">{message.text}</p>
+                      <p className="text-sm font-medium whitespace-pre-line">{message.text}</p>
                     </div>
                   </div>
                 </div>

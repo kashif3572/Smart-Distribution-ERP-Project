@@ -1,7 +1,7 @@
+// src/App.jsx - UPDATED VERSION
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
-
 import Dashboard from './pages/Dashboard'
 import Customers from './pages/Customers'
 import Purchases from './pages/Purchases'
@@ -10,10 +10,14 @@ import SalesDashboard from './pages/sales-dashboard'
 import RiderDashboard from './pages/rider-dashboard'
 import OrderPage from "./pages/Orders";
 import AddProduct from './pages/AddProduct'
-import SalesOrder from './pages/SalesOrder'  // <-- Add this import
+import SalesOrder from './pages/SalesOrder'
+import AddEmployeeForm from './pages/AddEmployeeForm';
+import APITest from './components/APITest'; // This should now work
+import AssignDelivery from './pages/AssignDelivery';
+
 
 import { AuthProvider, useAuth } from './auth/AuthContext'
-import AdminLayout from "./layouts/AdminLayout";   // <--- correct import
+import AdminLayout from "./layouts/AdminLayout";
 
 function Protected({ children, allowedRoles }) {
   const { user } = useAuth()
@@ -26,11 +30,13 @@ function Protected({ children, allowedRoles }) {
   return children
 }
 
-export default function App(){
+export default function App() {
   return (
     <AuthProvider>
+      {/* APITest will appear as overlay on all pages */}
+      <APITest minimal={true}  />
+      
       <Routes>
-
         {/* LOGIN */}
         <Route path="/login" element={<Login />} />
 
@@ -42,6 +48,13 @@ export default function App(){
             </AdminLayout>
           </Protected>
         } />
+		<Route path="/assign-delivery" element={
+  <Protected allowedRoles={['admin']}>
+    <AdminLayout>
+      <AssignDelivery />
+    </AdminLayout>
+  </Protected>
+} />
 
         <Route path="/orders" element={
           <Protected allowedRoles={["admin","sales"]}>
@@ -66,7 +79,7 @@ export default function App(){
             </AdminLayout>
           </Protected>
         } />
-
+		
         <Route path="/delivery" element={
           <Protected allowedRoles={['admin','rider']}>
             <AdminLayout>
@@ -74,11 +87,21 @@ export default function App(){
             </AdminLayout>
           </Protected>
         } />
+		
 
         <Route path="/add-product" element={
           <Protected allowedRoles={["admin"]}>
             <AdminLayout>
               <AddProduct />
+            </AdminLayout>
+          </Protected>
+        } />
+
+        {/* ================== ADD EMPLOYEE FORM ================== */}
+        <Route path="/add-employee" element={
+          <Protected allowedRoles={["admin"]}>
+            <AdminLayout>
+              <AddEmployeeForm />
             </AdminLayout>
           </Protected>
         } />
@@ -107,5 +130,5 @@ export default function App(){
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
-  )
+  );
 }

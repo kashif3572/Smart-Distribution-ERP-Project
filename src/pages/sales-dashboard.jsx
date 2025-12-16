@@ -26,7 +26,7 @@ export default function SalesDashboard() {
     fetchSalesmanOrders();
     
     // Refresh data every 60 seconds
-    const interval = setInterval(fetchSalesmanOrders, 60000);
+    const interval = setInterval(fetchSalesmanOrders, 600000);
     return () => clearInterval(interval);
   }, [user, navigate]);
 
