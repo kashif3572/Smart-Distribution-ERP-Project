@@ -1,4 +1,4 @@
-// src/components/Sidebar.jsx - FULLY UPDATED RESPONSIVE VERSION
+// src/components/Sidebar.jsx - UPDATED WITH UNIFIED GRADIENT STYLING
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -27,6 +27,11 @@ export default function Sidebar() {
         icon: '👥'
       },
       { 
+        to: '/add-customer', 
+        label: '➕ Add New Shop', 
+        icon: '🏪'
+      },
+      { 
         to: '/purchases', 
         label: 'Purchases', 
         icon: '🛒'
@@ -44,7 +49,7 @@ export default function Sidebar() {
       { 
         to: '/add-product', 
         label: 'Add Product', 
-        icon: '➕'
+        icon: '📦'
       },
       { 
         to: '/add-employee', 
@@ -108,7 +113,7 @@ export default function Sidebar() {
       {/* Mobile Toggle Button */}
       <button 
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-blue-600 text-white p-2 rounded-lg shadow-lg"
+        className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-2 rounded-lg shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200"
       >
         {isCollapsed ? '☰' : '✕'}
       </button>
@@ -133,10 +138,10 @@ export default function Sidebar() {
       `}>
         
         {/* Header - Compact */}
-        <div className="p-3 border-b border-blue-700 bg-blue-800">
+        <div className="p-3 border-b border-blue-700 bg-gradient-to-r from-blue-800 to-blue-900">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-1.5 rounded-lg shadow-md">
                 <span className="text-base font-bold">⚡</span>
               </div>
               <div className="min-w-0">
@@ -146,7 +151,7 @@ export default function Sidebar() {
             </div>
             <button 
               onClick={() => setIsCollapsed(true)}
-              className="lg:hidden text-blue-200 hover:text-white flex-shrink-0"
+              className="lg:hidden text-blue-200 hover:text-white flex-shrink-0 hover:bg-blue-700/50 p-1 rounded"
             >
               ✕
             </button>
@@ -154,16 +159,16 @@ export default function Sidebar() {
         </div>
 
         {/* User Info - Compact */}
-        <div className="p-3 border-b border-blue-700 bg-blue-800/50">
+        <div className="p-3 border-b border-blue-700 bg-gradient-to-r from-blue-800/80 to-blue-900/80">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 flex-shrink-0 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full flex items-center justify-center font-bold text-white text-sm">
+            <div className="w-8 h-8 flex-shrink-0 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-md">
               {getInitials(user?.name)}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium truncate text-sm">{user?.name || 'User'}</p>
               <div className="flex items-center justify-between mt-0.5">
                 <span className="text-xs text-blue-200 capitalize truncate">{user?.role || 'User'}</span>
-                <span className="text-xs px-1.5 py-0.5 bg-green-500/20 text-green-300 rounded-full flex-shrink-0">
+                <span className="text-xs px-1.5 py-0.5 bg-gradient-to-r from-green-500/30 to-green-600/30 text-green-300 rounded-full flex-shrink-0">
                   Online
                 </span>
               </div>
@@ -173,20 +178,21 @@ export default function Sidebar() {
 
         {/* Navigation - Compact */}
         <div className="flex-1 p-2 sm:p-3">
-          <nav className="space-y-0.5">
+          <nav className="space-y-1">
             {items.map((item) => (
               <Link 
                 key={item.to}
                 to={item.to}
                 onClick={() => setIsCollapsed(true)}
                 className={`
-                  flex items-center space-x-2 px-2 py-1.5 sm:px-3 sm:py-2 
+                  flex items-center space-x-2 px-3 py-2.5 sm:px-3 sm:py-3 
                   rounded-lg transition-all duration-200 text-sm
-                  hover:bg-blue-700/50 hover:text-white
+                  shadow-sm hover:shadow-md
                   ${isActive(item.to, item.exact) 
-                    ? 'bg-blue-600 text-white shadow-md' 
-                    : 'text-blue-100'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
+                    : 'bg-gradient-to-r from-blue-700/40 to-blue-600/40 text-blue-100 hover:from-blue-600/60 hover:to-blue-500/60 hover:text-white'
                   }
+                  border border-blue-600/30
                 `}
               >
                 <span className="text-base flex-shrink-0">{item.icon}</span>
@@ -197,13 +203,14 @@ export default function Sidebar() {
         </div>
 
         {/* Footer - Compact */}
-        <div className="p-3 border-t border-blue-700 bg-blue-800/50">
+        <div className="p-3 border-t border-blue-700 bg-gradient-to-r from-blue-800/80 to-blue-900/80">
           {/* Logout Button */}
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm
+            className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 text-sm
                      bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 
-                     rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+                     rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg
+                     border border-red-600/30"
           >
             <span className="text-sm">🚪</span>
             <span>Logout</span>

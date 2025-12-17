@@ -33,6 +33,16 @@ export default function RiderDashboard() {
   });
   const [hasReturnItems, setHasReturnItems] = useState(false);
 
+  // Clear message when user starts typing
+  useEffect(() => {
+    if (message.text && message.type === 'success') {
+      const timer = setTimeout(() => {
+        setMessage({ text: "", type: "" });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
   // Redirect if user is not logged in or not a rider
   useEffect(() => {
     if (!user || user.role !== 'rider') {
@@ -51,9 +61,20 @@ export default function RiderDashboard() {
       if (response.ok) {
         const data = await response.json();
         setDeliveries(data.deliveries || []);
+      } else {
+        const error = await response.text();
+        console.error("Error response:", error);
+        setMessage({ 
+          text: "Could not load delivery history", 
+          type: "warning" 
+        });
       }
     } catch (error) {
       console.error("Error fetching delivery history:", error);
+      setMessage({ 
+        text: "Network error loading delivery history", 
+        type: "error" 
+      });
     } finally {
       setLoading(false);
     }
@@ -65,7 +86,13 @@ export default function RiderDashboard() {
       if (formData.order_id && formData.order_id.length > 5) {
         try {
           setFetchingOrder(true);
-          setMessage({ text: "Fetching order details...", type: "info" });
+          
+          // Clear any delivery success messages when searching
+          if (message.type === 'success' && message.text.includes("Delivery status updated")) {
+            setMessage({ text: "Fetching order details...", type: "info" });
+          } else {
+            setMessage({ text: "Fetching order details...", type: "info" });
+          }
           
           // Fetch from your n8n webhook
           const response = await fetch(
@@ -90,7 +117,7 @@ export default function RiderDashboard() {
               }));
               
               setMessage({ 
-                text: `✅ Order found with ${orderData.products.length} products!`, 
+                text: `Order found with ${orderData.products.length} products!`, 
                 type: "success" 
               });
             } else {
@@ -127,6 +154,12 @@ export default function RiderDashboard() {
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // Clear success messages when user starts editing
+    if (message.type === 'success' && name === 'order_id') {
+      setMessage({ text: "", type: "" });
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -221,18 +254,23 @@ export default function RiderDashboard() {
       });
 
       if (response.ok) {
-        setMessage({ 
-          text: "✅ Delivery status updated successfully!", 
-          type: "success" 
-        });
-        
         // Add to local history
         const newDelivery = {
           id: Date.now(),
           ...deliveryData,
-          timestamp: new Date().toLocaleString()
+          timestamp: new Date().toLocaleString(),
+          display_time: new Date().toLocaleTimeString('en-IN', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          })
         };
         setDeliveries([newDelivery, ...deliveries]);
+        
+        // Show success message
+        setMessage({ 
+          text: "Delivery status updated successfully!", 
+          type: "success" 
+        });
         
         // Reset form
         resetForm();
@@ -245,7 +283,7 @@ export default function RiderDashboard() {
     } catch (error) {
       console.error("Error updating delivery:", error);
       setMessage({ 
-        text: "❌ Failed to update delivery status. Please try again.", 
+        text: "Failed to update delivery status. Please try again.", 
         type: "error" 
       });
     }
@@ -269,7 +307,6 @@ export default function RiderDashboard() {
       action: "Restock"
     });
     setHasReturnItems(false);
-    setMessage({ text: "", type: "" });
   };
 
   // Handle logout
@@ -349,13 +386,19 @@ export default function RiderDashboard() {
               
               {/* Message Display */}
               {message.text && (
-                <div className={`p-4 rounded-lg mb-6 ${
+                <div className={`p-4 rounded-lg mb-6 relative ${
                   message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' :
                   message.type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' :
                   message.type === 'warning' ? 'bg-yellow-50 border border-yellow-200 text-yellow-700' :
                   'bg-blue-50 border border-blue-200 text-blue-700'
                 }`}>
-                  <div className="flex items-start">
+                  <button
+                    onClick={() => setMessage({ text: "", type: "" })}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                  <div className="flex items-start pr-6">
                     <div className="flex-shrink-0">
                       {message.type === 'success' ? '✅' :
                        message.type === 'error' ? '❌' :
@@ -724,9 +767,24 @@ export default function RiderDashboard() {
                 <div className="flex space-x-4">
                   <button
                     type="submit"
-                    className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md"
+                    disabled={message.type === 'info'}
+                    className={`flex-1 font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-md ${
+                      message.type === 'info' 
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                    }`}
                   >
-                    Update Delivery Status
+                    {message.type === 'info' ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Updating...
+                      </span>
+                    ) : (
+                      'Update Delivery Status'
+                    )}
                   </button>
                   <button
                     type="button"
@@ -790,7 +848,7 @@ export default function RiderDashboard() {
                         </div>
                         <div>
                           <div className="text-xs text-gray-500">Time</div>
-                         <div className="text-sm">{delivery.display_time || delivery.timestamp}</div>
+                          <div className="text-sm">{delivery.display_time || delivery.timestamp}</div>
                         </div>
                       </div>
                       

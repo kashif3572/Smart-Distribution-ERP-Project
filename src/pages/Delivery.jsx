@@ -168,7 +168,7 @@ const processGoogleSheetsData = (rawData) => {
         const cashValue = row[cashReceivedIndex];
         if (cashValue !== null && cashValue !== undefined && cashValue !== '') {
           // Remove any currency symbols and commas
-          const cleaned = cashValue.toString().replace(/[₹,]/g, '').trim();
+          const cleaned = cashValue.toString().replace(/[Rs,]/g, '').trim();
           const parsed = parseFloat(cleaned);
           cashReceived = isNaN(parsed) ? 0 : parsed;
         }
@@ -428,15 +428,13 @@ const processGoogleSheetsData = (rawData) => {
     return filtered;
   };
 
-  const formatCurrency = (amount) => {
-    if (typeof amount !== 'number' || isNaN(amount)) return '₹0';
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+ const formatCurrency = (amount) => {
+  if (typeof amount !== 'number' || isNaN(amount)) return 'Rs 0';
+  
+  // Simple formatting with commas
+  const formattedAmount = amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `Rs ${formattedAmount}`;
+};
 
   const formatDateTime = (timestamp) => {
     try {
@@ -747,7 +745,7 @@ const processGoogleSheetsData = (rawData) => {
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-600">Avg per Delivery</div>
                   <div className="font-bold text-blue-700">
-                    {actualStats.total > 0 ? formatCurrency(actualStats.totalCash / actualStats.total) : '₹0'}
+                    {actualStats.total > 0 ? formatCurrency(actualStats.totalCash / actualStats.total) : 'Rs0'}
                   </div>
                 </div>
                 <div className="bg-yellow-50 p-3 rounded-lg">

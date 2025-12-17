@@ -19,6 +19,9 @@ export default function AddProduct() {
   const [showNewVendor, setShowNewVendor] = useState(false);
   const [newVendorId, setNewVendorId] = useState("");
   const [newVendorName, setNewVendorName] = useState("");
+  const [newVendorCategory, setNewVendorCategory] = useState("");
+  const [newVendorCity, setNewVendorCity] = useState("");
+  const [newVendorContact, setNewVendorContact] = useState("");
   const [manuallyEntered, setManuallyEntered] = useState(false);
 
   // Fetch live vendor data from API
@@ -70,24 +73,60 @@ export default function AddProduct() {
   };
 
   // Fetch product ID from n8n (optional)
-  const loadProductId = async () => {
-    if (manuallyEntered && productId) return; // Don't override if manually entered
+ const loadProductId = async () => {
+  if (manuallyEntered && productId) return; // Don't override if manually entered
+
+  setLoadingId(true);
+  setIdError(null);
+  try {
+    // Fetch data from your Product_Inventory sheet via the Sheep API
+    const API_BASE = import.meta.env.VITE_API_URL || 'https://sheets-api-545260361851.us-central1.run.app';
+    const res = await fetch(`${API_BASE}/api/read/Product_Inventory`);
     
-    setLoadingId(true);
-    setIdError(null);
-    try {
-      const res = await fetch("https://n8n.edutechpulse.online/webhook/Product-id");
-      if (!res.ok) throw new Error("Failed To Fetch ID");
-      const data = await res.json();
-      if (data && data.newProductId) {
-        setProductId(data.newProductId);
-      }
-    } catch (err) {
-      setIdError(err.message);
-    } finally {
-      setLoadingId(false);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch sheet data: HTTP ${res.status}`);
     }
-  };
+    
+    const data = await res.json();
+    
+    if (data.success && data.data && Array.isArray(data.data)) {
+      // Assuming column A (index 0) contains Product_ID
+      const existingProductIds = data.data.slice(1) // Skip header row
+        .map(row => row[0]) // Get first column (Product_ID)
+        .filter(Boolean) // Remove empty values
+        .filter(id => typeof id === 'string' && id.toString().match(/^P\d+/i)); // Filter valid PXXX IDs
+      
+      // Find the highest numeric part from existing PXXX IDs
+      let maxNum = 0;
+      existingProductIds.forEach(id => {
+        const match = id.toString().match(/P(\d+)/i);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxNum) {
+            maxNum = num;
+          }
+        }
+      });
+      
+      // Generate next ID (P001, P002, etc.)
+      const nextNum = maxNum + 1;
+      const newProductId = `P${nextNum.toString().padStart(3, '0')}`;
+      
+      setProductId(newProductId);
+      console.log(`Generated Product ID: ${newProductId} from ${existingProductIds.length} existing products`);
+    } else {
+      // If sheet is empty or no data, start with P001
+      setProductId('P001');
+    }
+  } catch (err) {
+    console.error("Error fetching product IDs:", err);
+    setIdError("Could not fetch from Product_Inventory sheet. Please enter ID manually.");
+    // Optionally, you could set a default ID here
+    // setProductId('P001');
+  } finally {
+    setLoadingId(false);
+  }
+};
 
   // Initial data loading
   useEffect(() => {
@@ -107,15 +146,22 @@ export default function AddProduct() {
 
   // Handle new vendor toggle
   const handleToggleNewVendor = () => {
+    const wasNewVendor = showNewVendor;
     setShowNewVendor(!showNewVendor);
-    if (!showNewVendor) {
-      // Switching to new vendor mode
+    
+    if (!wasNewVendor && showNewVendor) {
+      // Switching to new vendor mode - reset existing vendor fields
       setVendorName("");
       setVendorId("");
-    } else {
-      // Switching back to existing vendor mode
+      // Auto-generate new vendor ID
+      setNewVendorId(generateNextVendorId());
+    } else if (wasNewVendor && !showNewVendor) {
+      // Switching back to existing vendor mode - reset new vendor fields
       setNewVendorId("");
       setNewVendorName("");
+      setNewVendorCategory("");
+      setNewVendorCity("");
+      setNewVendorContact("");
     }
   };
 
@@ -142,6 +188,16 @@ export default function AddProduct() {
       return;
     }
 
+    // New vendor specific validation
+    if (showNewVendor) {
+      if (!newVendorCategory.trim() || !newVendorCity.trim() || !newVendorContact.trim()) {
+        alert("Please fill in all vendor details: Category, City, and Contact Information!");
+        setSubmitting(false);
+        return;
+      }
+    }
+
+    // Prepare product data
     const productData = {
       Product_ID: productId,
       Name: productName,
@@ -153,8 +209,22 @@ export default function AddProduct() {
       Unit: unit
     };
 
+    // Add new vendor data to productData if creating new vendor
+    if (showNewVendor) {
+      productData.New_Vendor_Data = {
+        Vendor_ID: finalVendorId,
+        Vendor_Name: finalVendorName,
+        Category: newVendorCategory,
+        City: newVendorCity,
+        Contact: newVendorContact,
+        // Add default values for other vendor fields
+        Payment_Terms: "",
+        Status: "Active"
+      };
+    }
+
     try {
-      const res = await fetch("https://n8n.edutechpulse.online/webhook/Add-product", {
+      const res = await fetch("https://n8n.edutechpulse.online/webhook-test/Add-product", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(productData)
@@ -173,6 +243,9 @@ export default function AddProduct() {
       setShowNewVendor(false);
       setNewVendorId("");
       setNewVendorName("");
+      setNewVendorCategory("");
+      setNewVendorCity("");
+      setNewVendorContact("");
       
       // Reload product ID (if not manually entered)
       if (!manuallyEntered) {
@@ -200,6 +273,22 @@ export default function AddProduct() {
     const nextNumber = String(lastNumber + 1).padStart(3, '0');
     return `V${nextNumber}`;
   };
+
+  // Reset new vendor form when toggling
+  const resetNewVendorForm = () => {
+    setNewVendorId(generateNextVendorId());
+    setNewVendorName("");
+    setNewVendorCategory("");
+    setNewVendorCity("");
+    setNewVendorContact("");
+  };
+
+  // Initialize new vendor ID when component loads
+  useEffect(() => {
+    if (vendors.length > 0) {
+      setNewVendorId(generateNextVendorId());
+    }
+  }, [vendors]);
 
   return (
     <main className="flex-1 p-6 bg-gray-50 min-h-screen">
@@ -298,7 +387,7 @@ export default function AddProduct() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       New Vendor ID
                       <span className="text-xs text-gray-500 ml-2">
-                        Suggested: {generateNextVendorId()}
+                        Auto-generated
                       </span>
                     </label>
                     <input
@@ -311,7 +400,7 @@ export default function AddProduct() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      New Vendor Name
+                      New Vendor Name *
                     </label>
                     <input
                       type="text"
@@ -319,8 +408,56 @@ export default function AddProduct() {
                       onChange={e => setNewVendorName(e.target.value)}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       placeholder="Enter new vendor name"
+                      required
                     />
                   </div>
+                </div>
+                
+                {/* New Vendor Additional Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Vendor Category *
+                    </label>
+                    <input
+                      type="text"
+                      value={newVendorCategory}
+                      onChange={e => setNewVendorCategory(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Soft Drinks, Grocery, etc."
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      City *
+                    </label>
+                    <input
+                      type="text"
+                      value={newVendorCity}
+                      onChange={e => setNewVendorCity(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Karachi, Lahore, etc."
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Contact Information *
+                    </label>
+                    <input
+                      type="text"
+                      value={newVendorContact}
+                      onChange={e => setNewVendorContact(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Phone number or email"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="text-xs text-gray-500 pt-2">
+                  <p>ℹ️ All new vendor details will be saved to your Vendors_DB along with the product.</p>
                 </div>
               </div>
             ) : (
@@ -347,7 +484,7 @@ export default function AddProduct() {
                 {/* Vendor Details Preview */}
                 {vendorName && (
                   <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                       <div>
                         <span className="text-gray-600">Vendor ID:</span>
                         <span className="font-medium ml-2">{vendorId}</span>
@@ -357,6 +494,22 @@ export default function AddProduct() {
                           <span className="text-gray-600">Category:</span>
                           <span className="font-medium ml-2">
                             {vendors.find(v => v.name === vendorName)?.category}
+                          </span>
+                        </div>
+                      )}
+                      {vendors.find(v => v.name === vendorName)?.city && (
+                        <div>
+                          <span className="text-gray-600">City:</span>
+                          <span className="font-medium ml-2">
+                            {vendors.find(v => v.name === vendorName)?.city}
+                          </span>
+                        </div>
+                      )}
+                      {vendors.find(v => v.name === vendorName)?.contact && (
+                        <div>
+                          <span className="text-gray-600">Contact:</span>
+                          <span className="font-medium ml-2">
+                            {vendors.find(v => v.name === vendorName)?.contact}
                           </span>
                         </div>
                       )}
@@ -461,7 +614,7 @@ export default function AddProduct() {
                 Saving Product...
               </span>
             ) : (
-              '➕ Add Product'
+              showNewVendor ? '➕ Add Product & New Vendor' : '➕ Add Product'
             )}
           </button>
         </form>
@@ -473,6 +626,8 @@ export default function AddProduct() {
             <li>Product ID is auto-generated but can be edited manually</li>
             <li>Vendors are fetched live from your Google Sheets database</li>
             <li>You can add new vendors directly from this form</li>
+            <li>When adding new vendor: Category, City, and Contact Information are required</li>
+            <li>New vendor data will be included in the JSON payload for your n8n workflow</li>
             <li>Ensure sale price is higher than cost price for profit</li>
             <li>All data will be saved to your Product_Inventory sheet</li>
           </ul>

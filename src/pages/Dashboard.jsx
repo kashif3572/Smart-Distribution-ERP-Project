@@ -1,4 +1,4 @@
-// src/pages/Dashboard.jsx - COMPLETE ENHANCED VERSION
+// src/pages/Dashboard.jsx - UPDATED WITH ADD CUSTOMER BUTTON
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -137,14 +137,14 @@ export default function Dashboard() {
   const quickStats = [
     { 
       title: "Today Sale", 
-      value: `₨ ${(daily_summary.total_sale || 0).toLocaleString()}`,
+      value: `Rs ${(daily_summary.total_sale || 0).toLocaleString()}`,
       icon: "💰",
       description: daily_summary.total_sale > 0 ? "Sales today" : "No sales today",
       trend: "up"
     },
     { 
       title: "Today Profit", 
-      value: `₨ ${(daily_summary.total_profits || 0).toLocaleString()}`,
+      value: `Rs ${(daily_summary.total_profits || 0).toLocaleString()}`,
       icon: "📈",
       description: daily_summary.total_profits > 0 ? "Profit today" : "No profit today",
       trend: "up"
@@ -165,14 +165,14 @@ export default function Dashboard() {
     },
     { 
       title: "Monthly Sales", 
-      value: `₨ ${(monthly_summary.monthly_sales || 0).toLocaleString()}`,
+      value: `Rs ${(monthly_summary.monthly_sales || 0).toLocaleString()}`,
       icon: "📅",
       description: "This month",
       trend: "up"
     },
     { 
       title: "Monthly Profit", 
-      value: `₨ ${(monthly_summary.monthly_profit || 0).toLocaleString()}`,
+      value: `Rs ${(monthly_summary.monthly_profit || 0).toLocaleString()}`,
       icon: "💹",
       description: "This month",
       trend: "up"
@@ -220,44 +220,56 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Responsive Quick Actions */}
-<div className="flex flex-wrap gap-2">
-  <button 
-    className="px-3 py-2 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-sm hover:shadow-md flex items-center gap-1 sm:gap-2 font-medium text-sm"
-    onClick={() => navigate("/add-employee")}
-    title="Add Employee"
-  >
-    <span className="text-lg">👨‍💼</span>
-    <div className="hidden sm:block text-left">
-      <div className="font-semibold leading-tight">Add Employee</div>
-      <div className="text-xs opacity-80 leading-tight">Add staff</div>
-    </div>
-  </button>
-  
-  <button 
-    className="px-3 py-2 sm:px-4 sm:py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-sm hover:shadow-md flex items-center gap-1 sm:gap-2 font-medium text-sm"
-    onClick={() => navigate("/add-product")}
-    title="Add Product"
-  >
-    <span className="text-lg">📦</span>
-    <div className="hidden sm:block text-left">
-      <div className="font-semibold leading-tight">Add Product</div>
-      <div className="text-xs opacity-80 leading-tight">Add to inventory</div>
-    </div>
-  </button>
+        {/* RESPONSIVE QUICK ACTIONS SECTION - UPDATED */}
+        <div className="flex flex-wrap gap-2 justify-center md:justify-end">
+          <button 
+            className="px-3 py-2 sm:px-4 sm:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all shadow-sm hover:shadow-md flex items-center gap-1 sm:gap-2 font-medium text-sm min-w-[100px]"
+            onClick={() => navigate("/add-customer")}
+            title="Add New Customer"
+          >
+            <span className="text-lg">🏪</span>
+            <div className="hidden sm:block text-left">
+              <div className="font-semibold leading-tight">Add Customer</div>
+              <div className="text-xs opacity-80 leading-tight">New shop</div>
+            </div>
+          </button>
+          
+          <button 
+            className="px-3 py-2 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-sm hover:shadow-md flex items-center gap-1 sm:gap-2 font-medium text-sm min-w-[100px]"
+            onClick={() => navigate("/add-employee")}
+            title="Add Employee"
+          >
+            <span className="text-lg">👨‍💼</span>
+            <div className="hidden sm:block text-left">
+              <div className="font-semibold leading-tight">Add Staff</div>
+              <div className="text-xs opacity-80 leading-tight">Add employee</div>
+            </div>
+          </button>
+          
+          <button 
+            className="px-3 py-2 sm:px-4 sm:py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-sm hover:shadow-md flex items-center gap-1 sm:gap-2 font-medium text-sm min-w-[100px]"
+            onClick={() => navigate("/add-product")}
+            title="Add Product"
+          >
+            <span className="text-lg">📦</span>
+            <div className="hidden sm:block text-left">
+              <div className="font-semibold leading-tight">Add Product</div>
+              <div className="text-xs opacity-80 leading-tight">Add to inventory</div>
+            </div>
+          </button>
 
-  <button 
-    className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md flex items-center gap-1 sm:gap-2 font-medium text-sm"
-    onClick={fetchData}
-    title="Refresh Data"
-  >
-    <span className="text-lg">🔄</span>
-    <div className="hidden sm:block text-left">
-      <div className="font-semibold leading-tight">Refresh</div>
-      <div className="text-xs opacity-80 leading-tight">Update data</div>
-    </div>
-  </button>
-</div>
+          <button 
+            className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md flex items-center gap-1 sm:gap-2 font-medium text-sm min-w-[100px]"
+            onClick={fetchData}
+            title="Refresh Data"
+          >
+            <span className="text-lg">🔄</span>
+            <div className="hidden sm:block text-left">
+              <div className="font-semibold leading-tight">Refresh</div>
+              <div className="text-xs opacity-80 leading-tight">Update data</div>
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* Data Source Info */}
@@ -267,7 +279,7 @@ export default function Dashboard() {
             <h2 className="text-lg font-bold text-gray-800">Google Sheets Data</h2>
             <p className="text-gray-600 text-sm">
               Connected to 24 sheets • {daily_summary.orders_count > 0 
-                ? `${daily_summary.orders_count} orders today • ₨${(daily_summary.total_sale || 0).toLocaleString()} sales • ₨${(daily_summary.total_profits || 0).toLocaleString()} profit`
+                ? `${daily_summary.orders_count} orders today • Rs ${(daily_summary.total_sale || 0).toLocaleString()} sales • Rs ${(daily_summary.total_profits || 0).toLocaleString()} profit`
                 : "No orders placed today"}
             </p>
           </div>
@@ -330,7 +342,7 @@ export default function Dashboard() {
                   <XAxis dataKey="name" stroke="#666"/>
                   <YAxis stroke="#666"/>
                   <Tooltip 
-                    formatter={(value) => [`₨ ${Number(value).toLocaleString()}`, 'Amount']}
+                    formatter={(value) => [`Rs ${Number(value).toLocaleString()}`, 'Amount']}
                     labelStyle={{ color: '#333' }}
                   />
                   <Bar dataKey="value" fill="#34D399" radius={[4, 4, 0, 0]} name="Amount"/>
@@ -405,7 +417,7 @@ export default function Dashboard() {
                 <XAxis dataKey="name" stroke="#666"/>
                 <YAxis stroke="#666"/>
                 <Tooltip 
-                  formatter={(value) => [`₨ ${Number(value).toLocaleString()}`, 'Amount']}
+                  formatter={(value) => [`Rs ${Number(value).toLocaleString()}`, 'Amount']}
                   labelStyle={{ color: '#333' }}
                 />
                 <Line 
@@ -446,7 +458,7 @@ export default function Dashboard() {
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">Value</p>
-                <p className="text-lg font-bold text-green-600">₨ {(daily_summary.total_sale || 0).toLocaleString()}</p>
+                <p className="text-lg font-bold text-green-600">Rs {(daily_summary.total_sale || 0).toLocaleString()}</p>
               </div>
             </div>
             
@@ -463,7 +475,7 @@ export default function Dashboard() {
               </div>
               <div className="text-right">
                 <p className="text-sm text-gray-600">Value</p>
-                <p className="text-lg font-bold text-green-600">₨ {(monthly_summary.monthly_sales || 0).toLocaleString()}</p>
+                <p className="text-lg font-bold text-green-600">Rs {(monthly_summary.monthly_sales || 0).toLocaleString()}</p>
               </div>
             </div>
             
@@ -476,7 +488,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Avg Order Value</p>
                   <p className="text-2xl font-bold text-gray-800">
-                    ₨ {monthly_summary.total_orders > 0 
+                    Rs {monthly_summary.total_orders > 0 
                       ? Math.round(monthly_summary.monthly_sales / monthly_summary.total_orders).toLocaleString()
                       : '0'}
                   </p>
@@ -593,7 +605,7 @@ function PerformerCard({ title, data, fields, isEmpty, color }) {
   const formatValue = (key, value) => {
     if (typeof value === "number") {
       if (key.includes("profit") || key.includes("sales")) {
-        return `₨ ${value.toLocaleString()}`;
+        return `Rs ${value.toLocaleString()}`;
       } else if (key.includes("margin")) {
         return `${(value * 100).toFixed(2)}%`;
       } else {

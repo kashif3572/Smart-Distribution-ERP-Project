@@ -234,15 +234,12 @@ export default function Orders() {
   };
 
   const formatCurrency = (amount) => {
-    if (typeof amount !== 'number') return 'Rs 0';
-    
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  };
+  if (typeof amount !== 'number' || isNaN(amount)) return 'Rs 0';
+  
+  // Simple formatting with commas
+  const formattedAmount = amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `Rs ${formattedAmount}`;
+};
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';

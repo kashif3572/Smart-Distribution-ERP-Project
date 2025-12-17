@@ -14,7 +14,7 @@ import SalesOrder from './pages/SalesOrder'
 import AddEmployeeForm from './pages/AddEmployeeForm';
 import APITest from './components/APITest'; // This should now work
 import AssignDelivery from './pages/AssignDelivery';
-
+import AddCustomer from './pages/AddCustomer'; // <-- ADD THIS LINE
 
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import AdminLayout from "./layouts/AdminLayout";
@@ -48,6 +48,16 @@ export default function App() {
             </AdminLayout>
           </Protected>
         } />
+		
+		 {/* ADD THIS ROUTE - Add Customer Page */}
+    <Route path="/add-customer" element={
+      <Protected allowedRoles={['admin']}>
+        <AdminLayout>
+          <AddCustomer /> {/* <-- ADD THIS ROUTE */}
+        </AdminLayout>
+      </Protected>
+    } />
+		
 		<Route path="/assign-delivery" element={
   <Protected allowedRoles={['admin']}>
     <AdminLayout>
