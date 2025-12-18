@@ -224,7 +224,7 @@ export default function AddProduct() {
     }
 
     try {
-      const res = await fetch("https://n8n.edutechpulse.online/webhook-test/Add-product", {
+      const res = await fetch("https://n8n.edutechpulse.online/webhook/Add-product", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(productData)
