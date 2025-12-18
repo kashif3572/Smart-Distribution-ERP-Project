@@ -247,7 +247,7 @@ export default function AddProduct() {
       setNewVendorCity("");
       setNewVendorContact("");
       
-      // Reload product ID (if not manually entered)
+      
       if (!manuallyEntered) {
         await loadProductId();
       }
