@@ -5,6 +5,9 @@ A modern ERP system for distribution companies that connects directly to Google 
 🚀 Live Demo
 🔗 URL: https://smart-ditributor-solution.netlify.app
 
+Vedio Prensentation: 
+https://drive.google.com/file/d/1jF645fsdSkKBViJD1J1_i2TQ-hvRr3wD/view?usp=sharing
+
 Demo Logins:
 
 Admin: admin / 1234 (Full access)
