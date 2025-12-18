@@ -53,7 +53,7 @@ export default function Sidebar() {
       },
       { 
         to: '/add-employee', 
-        label: 'Add Employee', 
+        label: 'Employee Management', 
         icon: '👨‍💼'
       }
     ],

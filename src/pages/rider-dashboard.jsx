@@ -56,25 +56,76 @@ export default function RiderDashboard() {
   const fetchDeliveryHistory = async () => {
     try {
       setLoading(true);
+      setMessage({ text: "", type: "" }); // Clear previous messages
+      
       const response = await fetch(`https://n8n.edutechpulse.online/webhook/Dilivery-History?riderId=${user.id}`);
       
       if (response.ok) {
         const data = await response.json();
-        setDeliveries(data.deliveries || []);
+        
+        // Check if we got valid data
+        if (data && Array.isArray(data.deliveries)) {
+          if (data.deliveries.length === 0) {
+            // No history found - this is NOT an error, just no data
+            setDeliveries([]);
+            // DO NOT set a message here - let the UI show the friendly "No history" state
+          } else {
+            // We have deliveries
+            setDeliveries(data.deliveries);
+            // Optional: show success message only briefly
+            setMessage({ 
+              text: `Loaded ${data.deliveries.length} delivery records`, 
+              type: "success" 
+            });
+            setTimeout(() => {
+              if (message.text.includes("Loaded") && message.type === 'success') {
+                setMessage({ text: "", type: "" });
+              }
+            }, 3000);
+          }
+        } else if (data && data.message && data.message.includes("No records")) {
+          // Server returned "No records found" - this is NOT an error
+          setDeliveries([]);
+          // DO NOT set a message
+        } else {
+          // Invalid response format - this IS an error
+          setDeliveries([]);
+          setMessage({ 
+            text: "Could not load delivery history. Please try again.", 
+            type: "error" 
+          });
+        }
       } else {
-        const error = await response.text();
-        console.error("Error response:", error);
-        setMessage({ 
-          text: "Could not load delivery history", 
-          type: "warning" 
-        });
+        // Server error but not network error
+        const errorText = await response.text();
+        
+        if (response.status === 404) {
+          // 404 means no records found (not an error for empty history)
+          setDeliveries([]);
+          // DO NOT set a message - empty state is fine
+        } else {
+          // Actual server error (500, 400, etc.)
+          setMessage({ 
+            text: "Could not load delivery history. Please try again later.", 
+            type: "error" 
+          });
+        }
       }
     } catch (error) {
       console.error("Error fetching delivery history:", error);
-      setMessage({ 
-        text: "Network error loading delivery history", 
-        type: "error" 
-      });
+      // Only show error if it's a real network issue (not a 404/no records)
+      if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+        setMessage({ 
+          text: "Network error. Please check your internet connection.", 
+          type: "error" 
+        });
+      } else {
+        // Other errors - show message
+        setMessage({ 
+          text: "Could not load delivery history", 
+          type: "error" 
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -384,13 +435,12 @@ export default function RiderDashboard() {
             <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-3 border-b">Update Delivery Status</h2>
               
-              {/* Message Display */}
-              {message.text && (
+              {/* Message Display - Show only errors and successes, NOT info messages about empty history */}
+              {message.text && (message.type === 'error' || message.type === 'success' || message.type === 'warning') && (
                 <div className={`p-4 rounded-lg mb-6 relative ${
                   message.type === 'success' ? 'bg-green-50 border border-green-200 text-green-700' :
                   message.type === 'error' ? 'bg-red-50 border border-red-200 text-red-700' :
-                  message.type === 'warning' ? 'bg-yellow-50 border border-yellow-200 text-yellow-700' :
-                  'bg-blue-50 border border-blue-200 text-blue-700'
+                  'bg-yellow-50 border border-yellow-200 text-yellow-700'
                 }`}>
                   <button
                     onClick={() => setMessage({ text: "", type: "" })}
@@ -399,12 +449,22 @@ export default function RiderDashboard() {
                     ✕
                   </button>
                   <div className="flex items-start pr-6">
-                    <div className="flex-shrink-0">
-                      {message.type === 'success' ? '✅' :
-                       message.type === 'error' ? '❌' :
-                       message.type === 'warning' ? '⚠️' : 'ℹ️'}
+                    <div className="flex-shrink-0 mr-3">
+                      {message.type === 'success' ? (
+                        <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : message.type === 'error' ? (
+                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.998-.833-2.732 0L4.342 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                      )}
                     </div>
-                    <div className="ml-3">
+                    <div className="flex-1">
                       <p className="text-sm font-medium">{message.text}</p>
                     </div>
                   </div>
@@ -816,11 +876,21 @@ export default function RiderDashboard() {
                 </div>
               ) : deliveries.length === 0 ? (
                 <div className="text-center py-8">
-                  <svg className="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-600">No delivery records</h3>
-                  <p className="text-gray-500 mt-1">Your delivery history will appear here</p>
+                  <div className="w-16 h-16 mx-auto mb-4 text-gray-300">
+                    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} 
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-600 mb-2">No delivery history yet</h3>
+                  <p className="text-gray-500 text-sm mb-4">
+                    Your completed deliveries will appear here
+                  </p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 inline-block">
+                    <p className="text-sm text-blue-700">
+                      <span className="font-medium">Tip:</span> Update delivery status to start building your history
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">

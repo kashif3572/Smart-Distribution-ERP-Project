@@ -1,81 +1,158 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+// src/auth/AuthContext.jsx - OPTIMIZED VERSION
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import bcrypt from 'bcryptjs';
 
-const AuthContext = createContext()
+const AuthContext = createContext(null);
+
+// Column indices based on your Google Sheets structure
+const COLUMNS = {
+  STAFF_ID: 0,
+  NAME: 1,
+  ROLE: 2,
+  MOBILE: 3,
+  USERNAME: 7,
+  PASSWORD_HASH: 8,
+  ACCOUNT_STATUS: 9
+};
+
+// Role mapping configuration
+const ROLE_MAPPING = {
+  manager: 'admin',
+  rider: 'rider',
+  booker: 'sales',
+  sales: 'sales',
+  admin: 'admin'
+};
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on initial render
   useEffect(() => {
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
+    const savedUser = localStorage.getItem('erp_user');
+    if (savedUser) {
       try {
-        setUser(JSON.parse(storedUser))
-      } catch (error) {
-        console.error('Error parsing stored user:', error)
-        localStorage.removeItem('user')
+        setUser(JSON.parse(savedUser));
+      } catch {
+        localStorage.removeItem('erp_user');
       }
     }
-  }, [])
+    setLoading(false);
+  }, []);
 
-  const login = ({ id, password }) => {
-    // Demo users with specific passwords
-    const demo = {
-      'admin': { id: 'admin', role: 'admin', name: 'Admin User', password: '1234' },
-      'rider1': { id: 'rider1', role: 'rider', name: 'Ali', password: '1234' },
-	  'rider2': { id: 'rider2', role: 'rider', name: 'Usman', password: '1234' },
-	  'rider3': { id: 'rider3', role: 'rider', name: 'Faheem', password: '1234' },
-      
-      // Salesmen with specific passwords
-      'BK-101': { id: 'BK-101', role: 'sales', name: 'John Doe', password: 'John101' },
-      'BK-102': { id: 'BK-102', role: 'sales', name: 'Sarah Khan', password: 'Sarah102' },
-      'BK-103': { id: 'BK-103', role: 'sales', name: 'Mike Wilson', password: 'Mike103' },
-      'BK-104': { id: 'BK-104', role: 'sales', name: 'Emily Davis', password: 'Emily104' },
-      'BK-105': { id: 'BK-105', role: 'sales', name: 'Ali Raza', password: 'Ali105' },
-      'BK-106': { id: 'BK-106', role: 'sales', name: 'Hassan Ahmed', password: 'Hassan106' },
-      'BK-107': { id: 'BK-107', role: 'sales', name: 'Usman Tariq', password: 'Usman107' },
-      'BK-108': { id: 'BK-108', role: 'sales', name: 'Fatima Noor', password: 'Fatima108' },
-      'BK-109': { id: 'BK-109', role: 'sales', name: 'Ayesha Malik', password: 'Ayesha109' },
-      'BK-110': { id: 'BK-110', role: 'sales', name: 'Adnan Sharif', password: 'Adnan110' },
-      'BK-111': { id: 'BK-111', role: 'sales', name: 'Maria Iqbal', password: 'Maria111' },
-      'BK-112': { id: 'BK-112', role: 'sales', name: 'Rehan Siddiqui', password: 'Rehan112' },
-      'BK-113': { id: 'BK-113', role: 'sales', name: 'Hamza Ali', password: 'Hamza113' },
-      'BK-114': { id: 'BK-114', role: 'sales', name: 'Sana Javed', password: 'Sana114' },
-      'BK-115': { id: 'BK-115', role: 'sales', name: 'Salman Khan', password: 'Salman115' },
-      
-      // Legacy sales accounts (for backward compatibility)
-      'sales1': { id: 'sales1', role: 'sales', name: 'Salesman', password: '1234' },
-    }
-
-    // Check if user exists and password matches
-    if (demo[id] && demo[id].password === password) {
-      const { password: _, ...userWithoutPassword } = demo[id]; // Remove password from user object
-      
-      // Store user in localStorage for persistence
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword))
-      localStorage.setItem('userId', userWithoutPassword.id)
-      localStorage.setItem('role', userWithoutPassword.role)
-      localStorage.setItem('userName', userWithoutPassword.name)
-      
-      setUser(userWithoutPassword)
-      return { ok: true, user: userWithoutPassword }
-    }
+  const checkPassword = (inputPassword, storedPassword) => {
+    if (!storedPassword || !inputPassword) return false;
     
-    return { 
-      ok: false, 
-      message: 'Invalid credentials. Please check your ID and password.' 
+    const stored = storedPassword.toString().trim();
+    const input = inputPassword.toString().trim();
+    
+    try {
+      if (stored.startsWith('$2')) {
+        return bcrypt.compareSync(input, stored);
+      }
+      return stored === input;
+    } catch {
+      return false;
     }
-  }
+  };
+
+  const login = async (username, password) => {
+    try {
+      if (!username || !password) {
+        throw new Error('Please enter username and password');
+      }
+      
+      const API_URL = import.meta.env.VITE_API_URL || 'https://sheets-api-545260361851.us-central1.run.app';
+      const response = await fetch(`${API_URL}/api/read/Staff_Master`);
+      
+      if (!response.ok) {
+        throw new Error('Server connection failed');
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success || !result.data || result.data.length < 2) {
+        throw new Error('No staff data available');
+      }
+      
+      const rows = result.data.slice(1);
+      const userRow = rows.find(row => {
+        const rowUsername = row[COLUMNS.USERNAME];
+        return rowUsername && rowUsername.toString().trim().toLowerCase() === username.trim().toLowerCase();
+      });
+      
+      if (!userRow) {
+        throw new Error('User not found');
+      }
+      
+      // Check account status
+      const status = userRow[COLUMNS.ACCOUNT_STATUS] || 'Active';
+      if (status.toString().toLowerCase() !== 'active') {
+        throw new Error('Account is not active');
+      }
+      
+      // Check password
+      const storedPassword = userRow[COLUMNS.PASSWORD_HASH] || '';
+      if (!storedPassword) {
+        throw new Error('Account not properly configured');
+      }
+      
+      if (!checkPassword(password, storedPassword)) {
+        throw new Error('Incorrect password');
+      }
+      
+      // Map role
+      const rawRole = userRow[COLUMNS.ROLE] ? userRow[COLUMNS.ROLE].toString().trim().toLowerCase() : 'booker';
+      const mappedRole = ROLE_MAPPING[rawRole] || 'sales';
+      
+      // Create user object
+      const userData = {
+        id: userRow[COLUMNS.STAFF_ID] || '',
+        name: userRow[COLUMNS.NAME] || '',
+        username: username,
+        role: mappedRole,
+        staffId: userRow[COLUMNS.STAFF_ID] || '',
+        mobile: userRow[COLUMNS.MOBILE] || '',
+        lastLogin: new Date().toISOString()
+      };
+      
+      // Save to storage
+      localStorage.setItem('erp_user', JSON.stringify(userData));
+      localStorage.setItem('erp_token', `erp_${Date.now()}`);
+      setUser(userData);
+      
+      return { success: true, user: userData };
+      
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error.message || 'Login failed. Please try again.' 
+      };
+    }
+  };
 
   const logout = () => {
-    localStorage.removeItem('user')
-    localStorage.removeItem('userId')
-    localStorage.removeItem('role')
-    localStorage.removeItem('userName')
-    setUser(null)
-  }
+    setUser(null);
+    localStorage.removeItem('erp_user');
+    localStorage.removeItem('erp_token');
+    window.location.href = '/login';
+  };
 
-  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>
+  const hasRole = (requiredRole) => user?.role === requiredRole;
+  const hasAnyRole = (roles) => roles.includes(user?.role);
+
+  return (
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      loading,
+      hasRole,
+      hasAnyRole
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-export const useAuth = () => useContext(AuthContext)
+export const useAuth = () => useContext(AuthContext);

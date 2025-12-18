@@ -241,7 +241,7 @@ export default function Dashboard() {
           >
             <span className="text-lg">👨‍💼</span>
             <div className="hidden sm:block text-left">
-              <div className="font-semibold leading-tight">Add Staff</div>
+              <div className="font-semibold leading-tight">Manage Staff</div>
               <div className="text-xs opacity-80 leading-tight">Add employee</div>
             </div>
           </button>
