@@ -7,11 +7,11 @@ A modern ERP system for distribution companies that connects directly to Google 
 
 Demo Logins:
 
-Admin: admin / 1234 (Full access)
+Admin: admin / 123456 (Full access)
 
-Sales: BK-101 / John101 (Orders & Customers)
+Sales: john.doe101 / John101 (Orders & Customers)
 
-Rider: rider1 / 1234 (Deliveries only)
+Rider: ahmed.raza101 / ahmed101 (Deliveries only)
 
 ✨ Features
 📊 Real-time Dashboard - Live analytics from Google Sheets
