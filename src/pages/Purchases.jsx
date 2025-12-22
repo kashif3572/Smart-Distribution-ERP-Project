@@ -646,13 +646,11 @@ export default function Purchases() {
           isLoading={loading}
           warning={true}
         />
-        <Box 
-          label="Purchased Inventory Value" 
-          value={formatCurrency(data?.summary?.totalInventoryValue || 0)}
-          sublabel={`${formatNumber(data?.summary?.totalUnitsPurchased || 0)} units`}
-          icon="💰"
-          isLoading={loading}
-        />
+       <Box 
+  label="Total Purchase Cost" 
+  value={formatCurrency(data?.summary?.totalInventoryValue || 0)}
+  sublabel="What you paid for inventory"
+/>
         <Box 
           label="Risk Score" 
           value={`${data?.summary?.riskScore || 0}%`}

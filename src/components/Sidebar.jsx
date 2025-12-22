@@ -21,16 +21,12 @@ export default function Sidebar() {
         label: 'Sales Orders', 
         icon: '📦'
       },
-      { 
-        to: '/customers', 
-        label: 'Customers', 
-        icon: '👥'
-      },
-      { 
-        to: '/add-customer', 
-        label: '➕ Add New Shop', 
-        icon: '🏪'
-      },
+      
+     // { 
+      //  to: '/add-customer', 
+       // label: '➕ Add New Shop', 
+       // icon: '🏪'
+     // },
       { 
         to: '/purchases', 
         label: 'Purchases', 
@@ -46,15 +42,25 @@ export default function Sidebar() {
         label: 'Assign Delivery', 
         icon: '📍'
       },
-      { 
-        to: '/add-product', 
-        label: 'Add Product', 
-        icon: '📦'
+     // { 
+       // to: '/add-product', 
+       // label: 'Add Product', 
+      //  icon: '📦'
+     // },
+	  { 
+        to: '/products', 
+        label: 'Product Management', 
+        icon: '📦' // or '🏷️' or '💰' for price icon
       },
       { 
         to: '/add-employee', 
         label: 'Employee Management', 
         icon: '👨‍💼'
+      },
+	  { 
+        to: '/customers', 
+        label: 'Customers Management', 
+        icon: '👥'
       }
     ],
     sales: [

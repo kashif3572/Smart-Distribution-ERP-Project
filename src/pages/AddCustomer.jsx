@@ -139,9 +139,18 @@ export default function AddCustomer() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     
-    if (name === 'Area_ID' && value === 'custom') {
-      // User selected "Add New Area", show custom input
-      setFormData(prev => ({ ...prev, [name]: '' }));
+    if (name === 'Area_ID') {
+      if (value === 'custom') {
+        // User selected "Add New Area", show custom input
+        setFormData(prev => ({ ...prev, [name]: 'custom' }));
+        setCustomArea('AREA-');
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+        setCustomArea(''); // Reset custom area
+      }
     } else {
       setFormData(prev => ({
         ...prev,
@@ -150,26 +159,35 @@ export default function AddCustomer() {
     }
   };
 
-  // Handle custom area input
-  const handleCustomAreaChange = (e) => {
-    const value = e.target.value;
-    setCustomArea(value);
-    setFormData(prev => ({
-      ...prev,
-      Area_ID: value
-    }));
-  };
-
   // Add new area to dropdown
   const addNewArea = () => {
     if (customArea && customArea.trim() !== '') {
-      const newArea = customArea.trim().toUpperCase();
-      if (!existingAreas.includes(newArea)) {
-        setExistingAreas(prev => [...prev, newArea]);
+      let newArea = customArea.trim().toUpperCase();
+      
+      // Ensure it has AREA- prefix
+      if (!newArea.startsWith('AREA-')) {
+        newArea = `AREA-${newArea.replace(/^AREA-/i, '')}`;
       }
-      setFormData(prev => ({ ...prev, Area_ID: newArea }));
-      setCustomArea('');
+      
+      // Clean up any extra characters
+      newArea = newArea.replace(/[^A-Z0-9-]/g, '');
+      
+      if (newArea && !existingAreas.includes(newArea)) {
+        // Add new area to dropdown
+        setExistingAreas(prev => [...prev, newArea]);
+        // Set the new area as selected in form
+        setFormData(prev => ({ ...prev, Area_ID: newArea }));
+        // Clear custom area input
+        setCustomArea('');
+        console.log(`✅ New area added: ${newArea}`);
+      }
     }
+  };
+
+  // Handle custom area input change (only update customArea, not formData)
+  const handleCustomAreaChange = (e) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    setCustomArea(`AREA-${value}`);
   };
 
   // Validate form
@@ -180,7 +198,7 @@ export default function AddCustomer() {
     if (!formData.Shop_Name.trim()) errors.push('Shop Name is required');
     if (!formData.Owner_Name.trim()) errors.push('Owner Name is required');
     if (!formData.Owner_Mobile.trim()) errors.push('Mobile Number is required');
-    if (!formData.Area_ID.trim()) errors.push('Area is required');
+    if (!formData.Area_ID.trim() || formData.Area_ID === 'custom') errors.push('Area is required');
     
     // Validate mobile number
     const mobileRegex = /^[0-9]{10,12}$/;
@@ -568,7 +586,7 @@ export default function AddCustomer() {
                 <p className="text-xs text-gray-500">10-12 digit mobile number</p>
               </div>
 
-              {/* Area Field */}
+              {/* Area Field - FIXED VERSION */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Area <span className="text-red-500">*</span>
@@ -576,7 +594,7 @@ export default function AddCustomer() {
                 <div className="relative">
                   <select
                     name="Area_ID"
-                    value={formData.Area_ID || ''}
+                    value={formData.Area_ID === 'custom' ? 'custom' : formData.Area_ID}
                     onChange={handleChange}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
                     required
@@ -597,25 +615,35 @@ export default function AddCustomer() {
                 </div>
                 <p className="text-xs text-gray-500">Delivery/service area</p>
                 
-                {/* Custom Area Input */}
-                {(formData.Area_ID === '' && customArea) || formData.Area_ID === 'custom' ? (
+                {/* Custom Area Input - Show when "Add New Area" is selected */}
+                {formData.Area_ID === 'custom' && (
                   <div className="mt-2 flex gap-2">
-                    <input
-                      type="text"
-                      value={customArea}
-                      onChange={handleCustomAreaChange}
-                      placeholder="Enter new area (e.g., AREA-06)"
-                      className="flex-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
+                    <div className="flex-1">
+                      <div className="flex items-center bg-gray-50 border border-gray-300 rounded-lg overflow-hidden">
+                        <span className="px-3 py-2 bg-gray-100 text-gray-700 border-r border-gray-300 font-medium">
+                          AREA-
+                        </span>
+                        <input
+                          type="text"
+                          value={customArea.replace(/^AREA-/i, '')}
+                          onChange={handleCustomAreaChange}
+                          placeholder="Enter area number (e.g., 06)"
+                          className="flex-1 p-2 border-0 focus:ring-0 bg-transparent"
+                          maxLength="3"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Enter numbers only (e.g., 06, 07, 12)</p>
+                    </div>
                     <button
                       type="button"
                       onClick={addNewArea}
-                      className="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                      disabled={!customArea || !customArea.match(/^AREA-\d+$/)}
+                      className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                     >
-                      Add
+                      Add Area
                     </button>
                   </div>
-                ) : null}
+                )}
               </div>
 
               {/* Credit Limit Field */}

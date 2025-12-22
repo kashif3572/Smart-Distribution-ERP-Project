@@ -15,6 +15,8 @@ import AddEmployeeForm from './pages/AddEmployeeForm';
 import APITest from './components/APITest'; // This should now work
 import AssignDelivery from './pages/AssignDelivery';
 import AddCustomer from './pages/AddCustomer'; // <-- ADD THIS LINE
+import ProductManagement from './pages/ProductManagement';
+
 
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import AdminLayout from "./layouts/AdminLayout";
@@ -106,6 +108,16 @@ export default function App() {
             </AdminLayout>
           </Protected>
         } />
+		
+		{/* 🔥 ADD PRODUCT MANAGEMENT ROUTE RIGHT HERE */}
+<Route path="/products" element={
+  <Protected allowedRoles={["admin"]}>
+    <AdminLayout>
+      <ProductManagement />
+    </AdminLayout>
+  </Protected>
+} />
+
 
         {/* ================== ADD EMPLOYEE FORM ================== */}
         <Route path="/add-employee" element={
