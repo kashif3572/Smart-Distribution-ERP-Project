@@ -1,104 +1,93 @@
-// src/components/Sidebar.jsx - UPDATED WITH UNIFIED GRADIENT STYLING
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
+// src/components/Sidebar.jsx - FIXED MOBILE TOGGLE ISSUE
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true); // Start collapsed on mobile
 
   const menu = {
     admin: [
-      { 
-        to: '/', 
-        label: 'Dashboard', 
-        icon: '📊',
-        exact: true 
+      {
+        to: "/",
+        label: "Dashboard",
+        icon: "📊",
+        exact: true,
       },
-      { 
-        to: '/orders', 
-        label: 'Sales Orders', 
-        icon: '📦'
+      {
+        to: "/orders",
+        label: "Sales Orders",
+        icon: "📦",
       },
-      
-     // { 
-      //  to: '/add-customer', 
-       // label: '➕ Add New Shop', 
-       // icon: '🏪'
-     // },
-      { 
-        to: '/purchases', 
-        label: 'Purchases', 
-        icon: '🛒'
+      {
+        to: "/purchases",
+        label: "Purchases",
+        icon: "🛒",
       },
-      { 
-        to: '/delivery', 
-        label: 'Order Delivered', 
-        icon: '🚚'
+      {
+        to: "/delivery",
+        label: "Order Delivered",
+        icon: "🚚",
       },
-      { 
-        to: '/assign-delivery', 
-        label: 'Assign Delivery', 
-        icon: '📍'
+      {
+        to: "/assign-delivery",
+        label: "Assign Delivery",
+        icon: "📍",
       },
-     // { 
-       // to: '/add-product', 
-       // label: 'Add Product', 
-      //  icon: '📦'
-     // },
-	  { 
-        to: '/products', 
-        label: 'Product Management', 
-        icon: '📦' // or '🏷️' or '💰' for price icon
+      {
+        to: "/products",
+        label: "Product Management",
+        icon: "📦",
       },
-      { 
-        to: '/add-employee', 
-        label: 'Employee Management', 
-        icon: '👨‍💼'
+      {
+        to: "/add-employee",
+        label: "Employee Management",
+        icon: "👨‍💼",
       },
-	  { 
-        to: '/customers', 
-        label: 'Customers Management', 
-        icon: '👥'
-      }
+      {
+        to: "/customers",
+        label: "Customers Management",
+        icon: "👥",
+      },
     ],
     sales: [
-      { 
-        to: '/sales-dashboard', 
-        label: 'Dashboard', 
-        icon: '📊',
-        exact: true 
+      {
+        to: "/sales-dashboard",
+        label: "Dashboard",
+        icon: "📊",
+        exact: true,
       },
-      { 
-        to: '/orders', 
-        label: 'Orders', 
-        icon: '📦'
+      {
+        to: "/orders",
+        label: "Orders",
+        icon: "📦",
       },
-      { 
-        to: '/customers', 
-        label: 'Customers', 
-        icon: '👥'
+      {
+        to: "/customers",
+        label: "Customers",
+        icon: "👥",
       },
-      { 
-        to: '/sales-order', 
-        label: 'Sales Order', 
-        icon: '💵'
-      }
+      {
+        to: "/sales-order",
+        label: "Sales Order",
+        icon: "💵",
+      },
     ],
     rider: [
-      { 
-        to: '/rider-dashboard', 
-        label: 'Dashboard', 
-        icon: '📊',
-        exact: true 
+      {
+        to: "/rider-dashboard",
+        label: "Dashboard",
+        icon: "📊",
+        exact: true,
       },
-      { 
-        to: '/delivery', 
-        label: 'My Deliveries', 
-        icon: '🚚'
-      }
-    ]
+      {
+        to: "/delivery",
+        label: "My Deliveries",
+        icon: "🚚",
+      },
+    ],
   };
 
   const items = menu[user?.role] || [];
@@ -111,38 +100,48 @@ export default function Sidebar() {
   };
 
   const getInitials = (name) => {
-    return name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
+    return name
+      ? name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+      : "U";
   };
 
   return (
     <>
-      {/* Mobile Toggle Button */}
-      <button 
+      {/* Mobile Toggle Button - FIXED: Always visible when sidebar is collapsed */}
+      <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-2 rounded-lg shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200"
+        className={`lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3 rounded-lg shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 ${
+          !isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
+        aria-label={isCollapsed ? "Open menu" : "Close menu"}
       >
-        {isCollapsed ? '☰' : '✕'}
+        {isCollapsed ? "☰" : "✕"}
       </button>
 
-      {/* Overlay for mobile */}
+      {/* Overlay for mobile - Only show when sidebar is open */}
       {!isCollapsed && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => setIsCollapsed(true)}
         />
       )}
 
-      {/* Sidebar - RESPONSIVE VERSION */}
-      <aside className={`
-        ${isCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'}
+      {/* Sidebar - FIXED: Start collapsed on mobile by default */}
+      <aside
+        className={`
+        ${isCollapsed ? "-translate-x-full lg:translate-x-0" : "translate-x-0"}
         fixed lg:sticky top-0 left-0 
-        w-52 sm:w-56 md:w-60 lg:w-64 xl:w-72  /* Responsive widths */
+        w-52 sm:w-56 md:w-60 lg:w-64 xl:w-72
         bg-gradient-to-b from-blue-800 via-blue-800 to-blue-900 text-white 
-        h-screen z-30 transition-all duration-300 ease-in-out
+        h-screen z-40 transition-all duration-300 ease-in-out
         flex flex-col shadow-xl border-r border-blue-700
-        overflow-y-auto  /* Allow scrolling if content overflows */
-      `}>
-        
+        overflow-y-auto
+      `}
+      >
         {/* Header - Compact */}
         <div className="p-3 border-b border-blue-700 bg-gradient-to-r from-blue-800 to-blue-900">
           <div className="flex items-center justify-between">
@@ -152,12 +151,16 @@ export default function Sidebar() {
               </div>
               <div className="min-w-0">
                 <h1 className="text-lg font-bold truncate">SMART ERP</h1>
-                <p className="text-xs text-blue-200 truncate">Enterprise Solution</p>
+                <p className="text-xs text-blue-200 truncate">
+                  Enterprise Solution
+                </p>
               </div>
             </div>
-            <button 
+            {/* Close button inside sidebar - Only show on mobile */}
+            <button
               onClick={() => setIsCollapsed(true)}
               className="lg:hidden text-blue-200 hover:text-white flex-shrink-0 hover:bg-blue-700/50 p-1 rounded"
+              aria-label="Close menu"
             >
               ✕
             </button>
@@ -171,9 +174,13 @@ export default function Sidebar() {
               {getInitials(user?.name)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium truncate text-sm">{user?.name || 'User'}</p>
+              <p className="font-medium truncate text-sm">
+                {user?.name || "User"}
+              </p>
               <div className="flex items-center justify-between mt-0.5">
-                <span className="text-xs text-blue-200 capitalize truncate">{user?.role || 'User'}</span>
+                <span className="text-xs text-blue-200 capitalize truncate">
+                  {user?.role || "User"}
+                </span>
                 <span className="text-xs px-1.5 py-0.5 bg-gradient-to-r from-green-500/30 to-green-600/30 text-green-300 rounded-full flex-shrink-0">
                   Online
                 </span>
@@ -186,23 +193,31 @@ export default function Sidebar() {
         <div className="flex-1 p-2 sm:p-3">
           <nav className="space-y-1">
             {items.map((item) => (
-              <Link 
+              <Link
                 key={item.to}
                 to={item.to}
-                onClick={() => setIsCollapsed(true)}
+                onClick={() => {
+                  // On mobile, close sidebar after clicking a link
+                  if (window.innerWidth < 1024) {
+                    setIsCollapsed(true);
+                  }
+                }}
                 className={`
                   flex items-center space-x-2 px-3 py-2.5 sm:px-3 sm:py-3 
                   rounded-lg transition-all duration-200 text-sm
                   shadow-sm hover:shadow-md
-                  ${isActive(item.to, item.exact) 
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' 
-                    : 'bg-gradient-to-r from-blue-700/40 to-blue-600/40 text-blue-100 hover:from-blue-600/60 hover:to-blue-500/60 hover:text-white'
+                  ${
+                    isActive(item.to, item.exact)
+                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg"
+                      : "bg-gradient-to-r from-blue-700/40 to-blue-600/40 text-blue-100 hover:from-blue-600/60 hover:to-blue-500/60 hover:text-white"
                   }
                   border border-blue-600/30
                 `}
               >
                 <span className="text-base flex-shrink-0">{item.icon}</span>
-                <span className="font-medium truncate text-xs sm:text-sm">{item.label}</span>
+                <span className="font-medium truncate text-xs sm:text-sm">
+                  {item.label}
+                </span>
               </Link>
             ))}
           </nav>
@@ -212,7 +227,10 @@ export default function Sidebar() {
         <div className="p-3 border-t border-blue-700 bg-gradient-to-r from-blue-800/80 to-blue-900/80">
           {/* Logout Button */}
           <button
-            onClick={logout}
+            onClick={() => {
+              logout();
+              setIsCollapsed(true); // Close sidebar on logout
+            }}
             className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 text-sm
                      bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 
                      rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg
@@ -225,7 +243,9 @@ export default function Sidebar() {
           {/* Version Info */}
           <div className="mt-3 text-center">
             <p className="text-xs text-blue-300">ERP System v2.0</p>
-            <p className="text-xs text-blue-400 mt-0.5">© 2025 Smart Distribution</p>
+            <p className="text-xs text-blue-400 mt-0.5">
+              © 2025 Smart Distribution
+            </p>
           </div>
         </div>
       </aside>
